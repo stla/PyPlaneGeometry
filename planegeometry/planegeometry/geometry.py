@@ -200,8 +200,23 @@ class Triangle:
             "circles": circles,
             "tangency_points": tangency_points
         }
+    
+    def equal_detour_point(self):
+        "Equal detour point of the triangle, also known as the X(176) triangle center."
+        A = self.A
+        B = self.B
+        C = self.C
+        a = distance_(B, C)
+        b = distance_(A, C)
+        c = distance_(B, A)
+        s = (a + b + c) / 2
+        areaABC = sqrt(s*(s-a)*(s-b)*(s-c))
+        abc = np.array([a, b, c])
+        v = 2 * areaABC / np.array([b+c-a, c+a-b, a+b-c])
+        tc = abc + v # triangular coordinates
+        point = (tc[0]*A + tc[1]*B + tc[2]*C) / tc.sum()
+        detour = distance_(A, point) + distance_(B, point) - c
+        return (point, detour)
 
 
-
-        
 
