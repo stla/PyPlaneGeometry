@@ -8,7 +8,9 @@ from .internal import (
     line_line_intersection_,
     unit_vector_,
     epsilon_,
-    ellipse_points_
+    ellipse_points_,
+    collinear_,
+    circle_points_
 )
 
 
@@ -79,6 +81,61 @@ class Line:
         dy2 = Q1[1] - Q2[1]
         D = det2x2_((dx1, dy1), (dx2, dy2))
         return abs(D) < sqrt(epsilon_)
+    
+    def includes(self, M, strict = False, checkCollinear = True):
+        """Check whether a point belongs to the line.
+        
+        :param M: the point for which we want to test whether it belongs to the line
+        :param strict: Boolean, whether to take into account `extendA` and `extendB`
+        :param checkCollinear: Boolean, whether to check the collinearity of `A`, `B`, and `M`; set to `False` only if you use `strict=True` and you are sure that `M` is on the line (AB)
+        :returns: A Boolean value.        
+        
+        """
+        A = self.A
+        B = self.B
+        if checkCollinear:
+            if not collinear_(A, B, M):
+                return False
+        extendA = self.extendA
+        extendB = self.extendB
+        if !strict or (extendA and extendB):
+            return collinear_(A, B, M)
+        if (not extendA) and (not extendB):
+            dotprod = dot_(A-M, B-M)
+            if dotprod <= 0:
+                return True
+            print("The point is on the line (AB), but not on the segment [AB].")
+            return False
+        elif extendA:
+            if np.any((M-B)*(A-B)>0):
+                return True
+            print("The point is on the line (AB), but not on the half-line (AB].")
+            return False
+        else: # extendB
+            if np.any((M-A)*(B-A)>0)
+                return True
+            print("The point is on the line (AB), but not on the half-line [AB).")
+            return False
+    
+    def perpendicular(self, M, extendH = False, extendM = True):
+        """Perpendicular line passing through a given point.
+        
+        :param M: the point through which the perpendicular passes
+        :param extendH: Boolean, whether to extend the perpendicular line beyond the meeting point
+        :param extendM: Boolean,  whether to extend the perpendicular line beyond the point `M`
+        :returns: A `Line` object; its two points are the meeting point and the point `M`.
+        
+        """
+        A = self.A
+        B = self.B
+        A_B = B - A
+        v = np.array([-A_B[1], A_B[0]])
+        if self.includes(M):
+            print("M is on the line.")
+            return Line(M, M + v, True, True)
+        H = line_line_intersection_(A, B, M - v, M + v)
+        return Line(H, M, extendH, extendM)
+
 
 
 def intersection_line_line(line1, line2, strict=False):
@@ -108,6 +165,60 @@ class Circle:
         print("Circle:\n")
         print(" center: ", tuple(self.center), "\n")
         print(" radius: ", self.radius, "\n")
+
+
+class Arc:
+    """Arc class.
+    
+    A circular arc is initialized by its center (array-like object of length 
+    two), a radius, a starting angle and an ending angle. They are 
+    respectively named `center`, `radius`, `alpha1` and `alpha2`.
+    
+    """
+    def __init__(self, center, radius, alpha1, alpha2, degrees = True):
+        self.center = np.asarray(center, dtype=float)
+        self.radius = radius
+        self.alpha1 = alpha1
+        self.alpha2 = alpha2
+        self.degrees = degrees
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    # def show(self):
+    #     unit = "degree" if self.degrees else "radian"
+    #     s = "" if alpha == 1 else "s"
+    #     print("Ellipse:\n")
+    #     print("       center: ", tuple(self.center), "\n")
+    #     print(" major radius: ", self.rmajor, "\n")
+    #     print(" minor radius: ", self.rminor, "\n")
+    #     print("        angle: ", self.alpha, unit + s, "\n")
+    
+    def path(self, n_points=100):
+        """Path that forms the arc.
+        
+        :param npoints: number of points of the path
+        :returns: A matrix with two columns and `n_points` rows.
+        
+        """
+        center = self.center
+        radius = self.radius
+        alpha1 = self.alpha1
+        alpha2 = self.alpha2
+        if self.degrees:
+            alpha1 = alpha1 * pi/180
+            alpha2 = alpha2 * pi/180
+        alpha1 = alpha1 % (2*pi)
+        alpha2 = alpha2 % (2*pi)
+        dalpha = alpha2 - alpha1
+        if dalpha < 0:
+            dalpha += 2*pi
+        theta = np.linspace(0, dalpha, n_points)
+        return circle_points_(
+            alpha1 + theta,
+            center,
+            radius
+        )
 
 
 class Ellipse:
@@ -141,7 +252,7 @@ class Ellipse:
         """Path that forms the ellipse.
         
         :param npoints: number of points of the path
-        :returns: A matrix with two columns and `npoints` rows.
+        :returns: A matrix with two columns and `n_points` rows.
         
         """
         center = self.center

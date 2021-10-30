@@ -36,13 +36,35 @@ def unit_vector_(beta):
     return np.array([cos(beta), sin(beta)])
 
 def ellipse_points_(t, O, a, b, alpha):
-  x = a * np.cos(t)
-  y = b * np.sin(t)
-  cosalpha = cos(alpha)
-  sinalpha = sin(alpha)
-  return np.column_stack(
-      (
-       O[0] + cosalpha*x - sinalpha*y,
-       O[1] + sinalpha*x + cosalpha*y
-      )
-  )
+    x = a * np.cos(t)
+    y = b * np.sin(t)
+    cosalpha = cos(alpha)
+    sinalpha = sin(alpha)
+    return np.column_stack(
+        (
+         O[0] + cosalpha*x - sinalpha*y,
+         O[1] + sinalpha*x + cosalpha*y
+        )
+    )
+
+def circle_points_(t, O, r):
+    return np.column_stack(
+        (
+         O[0] + r * np.cos(t),
+         O[1] + r * np.sin(t)
+        )
+    )
+  
+def collinear_(A, B, C, tol = 0):
+    notdistinct = np.allclose(A, B) or np.allclose(A, C) or np.allclose(B, C)
+    if notdistinct:
+        return True
+    AB = B - A
+    AC = C - A
+    z1 = complex(*AB)
+    z2 = complex(*AC)
+    z = z1.conjugate() * z2
+    re = z.real
+    re2 = re*re
+    im = z.imag
+    return re2 / (re2 + im*im) >= 1 - tol
