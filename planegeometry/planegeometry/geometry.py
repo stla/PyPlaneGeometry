@@ -8,6 +8,7 @@ from .internal import (
     line_line_intersection_,
     unit_vector_,
     epsilon_,
+    ellipse_points_
 )
 
 
@@ -109,7 +110,59 @@ class Circle:
         print(" radius: ", self.radius, "\n")
 
 
+class Ellipse:
+    """Ellipse class.
+    
+    An ellipse is initialized by its center (array-like object of length two), 
+    its major radius, its minor radius, and the angle `alpha` between the 
+    x-axis and the major axis.
+    
+    """
+    def __init__(self, center, rmajor, rminor, alpha, degrees = True):
+        self.center = np.asarray(center, dtype=float)
+        self.rmajor = rmajor
+        self.rminor = rminor
+        self.alpha = alpha
+        self.degrees = degrees
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    def show(self):
+        unit = "degree" if self.degrees else "radian"
+        s = "" if alpha == 1 else "s"
+        print("Ellipse:\n")
+        print("       center: ", tuple(self.center), "\n")
+        print(" major radius: ", self.rmajor, "\n")
+        print(" minor radius: ", self.rminor, "\n")
+        print("        angle: ", self.alpha, unit + s, "\n")
+    
+    def path(self, n_points=100):
+        """Path that forms the ellipse.
+        
+        :param npoints: number of points of the path
+        :returns: A matrix with two columns and `npoints` rows.
+        
+        """
+        center = self.center
+        alpha = self.alpha
+        if self.degrees:
+            alpha = alpha * pi/180
+        return ellipse_points_(
+            np.linspace(0, 2*pi, n_points+1)[:n_points],
+            center,
+            self.rmajor,
+            self.rminor,
+            alpha
+        )
+
+
 class Inversion:
+    """Inversion class.
+    
+    An inversion is initialized by its pole and its power.
+    
+    """
     def __init__(self, pole, power):
         self.pole = np.asarray(pole, dtype=float)
         self.power = power
@@ -165,29 +218,37 @@ def SteinerChain_phi0_(c0, n, shift):
     return circles0
 
 def SteinerChain(c0, n, phi, shift, ellipse = False):
-    circles0 = SteinerChain_phi0_(c0 = c0, n = n, shift = shift)
-    if phi == 0:
-        return circles0
+    circles = SteinerChain_phi0_(c0 = c0, n = n, shift = shift)
     R = c0.radius
     O = c0.center
-    invphi = 1 / phi
-    I = np.array([R*invphi, 0]) + O
-    r2 = R*R * (invphi*invphi - 1)
-    iota = Inversion(I, r2)
-    out = [iota.invert_circle(circle) for circle in circles0]
-    # if(ellipse){
-    #   O2 <- out[[n+1L]]$center
-    #   r <- out[[n+1L]]$radius
-    #   c <- (O2[1L] - O[1L])/2
-    #   a <- (r + R)/2
-    #   b <- sqrt(a*a - c*c)
-    #   attr(out, "ellipse") <- Ellipse$new((O+O2)/2, a, b, 0)
-    # }
-    return out
+    if phi != 0:
+        invphi = 1 / phi
+        I = np.array([R*invphi, 0]) + O
+        r2 = R*R * (invphi*invphi - 1)
+        iota = Inversion(I, r2)
+        circles = [iota.invert_circle(circle) for circle in circles]
+    # the ellipse of centers
+    inner = circles[-1]
+    O2 = inner.center
+    r = inner.radius
+    c = (O2[0] - O[0])/2
+    a = (r + R)/2
+    b = sqrt(a*a - c*c)
+    ell = Ellipse((O+O2)/2, a, b, 0)
+    return {
+        "circles": circles,
+        "ellipse": ell
+    }
 
 
 
 class Triangle:
+    """Triangle class.
+    
+    A triangle is initialized by its three vertices, some array-like objects 
+    of length two.
+    
+    """
     def __init__(self, A, B, C):
         self.A = np.asarray(A, dtype=float)
         self.B = np.asarray(B, dtype=float)
@@ -201,12 +262,13 @@ class Triangle:
         print("       A: ", tuple(self.A), "\n")
         print("       B: ", tuple(self.B), "\n")
         print("       C: ", tuple(self.C), "\n")
-        f = self.flatness()
+        f = self.flatness
         if f == 1:
             print("The triangle is flat.\n")
         elif f > 0.99:
             print("The triangle is almost flat (flatness: %s).\n" % f)
     
+    @property
     def flatness(self):
         "Flatness, a number between 0 and 1; a triangle is flat when its flatness is 1."
         AB = self.B - self.A
@@ -217,22 +279,27 @@ class Triangle:
         re2 = re * re
         return re2 / (re2 + im*im)
 
+    @property
     def a(self):
         "Length of the side BC."
         return distance_(self.B, self.C)
 
+    @property
     def b(self):
         "Length of the side AC."
         return distance_(self.A, self.C)
 
+    @property
     def c(self):
         "Length of the side AB."
         return distance_(self.A, self.B)
-    
+
+    @property    
     def edges(self):
         "Edge lengths of the triangle."
         return {"a": self.a(), "b": self.b(), "c": self.c()}
-    
+
+    @property    
     def orientation(self):
         "Orientation of the triangle; 1 for counterclockwise, -1 for clockwise, 0 for collinear."
         A = self.A
@@ -251,14 +318,16 @@ class Triangle:
         s = (A1*C0 - A0*C1 + (C1 - A1)*M0 + (A0 - C0)*M1) / dsArea
         t = (A0*B1 - A1*B0 + (A1 - B1)*M0 + (B0 - A0)*M1) / dsArea
         return s > 0 and t > 0 and 1-s-t > 0
-    
+
+    @property    
     def is_acute(self):
         "Check whether the triangle is acute."
         edges = [self.a(), self.b(), self.c()]
         edges.sort()
         edge0, edge1, edge2 = edges
         return edge0*edge0 + edge1*edge1 >= edge2*edge2
-    
+
+    @property    
     def angleA(self):
         "The angle at the vertex A in radians."
         A = self.A
@@ -269,7 +338,8 @@ class Triangle:
         b = vlength_(AC)
         c = vlength_(AB)
         return acos(dot_(AC, AB) / b / c)
-        
+
+    @property        
     def angleB(self):
         "The angle at the vertex B in radians."
         A = self.A
@@ -280,7 +350,8 @@ class Triangle:
         a = vlength_(BC)
         c = vlength_(BA)
         return acos(dot_(BC, BA) / a / c)
-        
+
+    @property        
     def angleC(self):
         "The angle at the vertex C in radians."
         A = self.A
@@ -308,7 +379,7 @@ class Triangle:
         return Circle(center, radius)
     
     def malfatti_circles(self):
-        if self.flatness() == 1:
+        if self.flatness == 1:
             return None
         A = self.A
         B = self.B

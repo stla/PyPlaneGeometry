@@ -34,3 +34,15 @@ def line_line_intersection_(P1, P2, Q1, Q2):
 
 def unit_vector_(beta):
     return np.array([cos(beta), sin(beta)])
+
+def ellipse_points_(t, O, a, b, alpha):
+  x = a * np.cos(t)
+  y = b * np.sin(t)
+  cosalpha = cos(alpha)
+  sinalpha = sin(alpha)
+  return np.column_stack(
+      (
+       O[0] + cosalpha*x - sinalpha*y,
+       O[1] + sinalpha*x + cosalpha*y
+      )
+  )
