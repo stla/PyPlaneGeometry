@@ -1,4 +1,7 @@
+from math import cos, sin
 import numpy as np
+
+epsilon_ = np.finfo(float).eps
 
 def distance_(A, B):
     return np.linalg.norm(B-A)
@@ -28,3 +31,6 @@ def line_line_intersection_(P1, P2, Q1, Q2):
       det2x2_((D1, dx1), (D2, dx2)),
       det2x2_((D1, dy1), (D2, dy2))
     ]) / D
+
+def unit_vector_(beta):
+    return np.array([cos(beta), sin(beta)])

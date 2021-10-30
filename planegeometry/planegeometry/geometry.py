@@ -1,6 +1,14 @@
-from math import acos, sqrt, tan, atan2, cos, sin, pi
+from math import acos, sqrt, tan, atan2, cos, sin, pi, inf, isinf
 import numpy as np
-from .internal import distance_, vlength_, dot_, det2x2_, line_line_intersection_
+from .internal import (
+    distance_,
+    vlength_,
+    dot_,
+    det2x2_,
+    line_line_intersection_,
+    unit_vector_,
+    epsilon_,
+)
 
 
 class Line:
@@ -69,7 +77,7 @@ class Line:
         dy1 = P1[1] - P2[1]
         dy2 = Q1[1] - Q2[1]
         D = det2x2_((dx1, dy1), (dx2, dy2))
-        return abs(D) < sqrt(np.finfo(float).eps)
+        return abs(D) < sqrt(epsilon_)
 
 
 def intersection_line_line(line1, line2, strict=False):
@@ -99,6 +107,84 @@ class Circle:
         print("Circle:\n")
         print(" center: ", tuple(self.center), "\n")
         print(" radius: ", self.radius, "\n")
+
+
+class Inversion:
+    def __init__(self, pole, power):
+        self.pole = np.asarray(pole, dtype=float)
+        self.power = power
+        
+    def __str__(self):
+        return str(self.__dict__)
+
+    def show(self):
+        print("Inversion:\n")
+        print("      pole: ", tuple(self.pole), "\n")
+        print("     power: ", self.power, "\n")
+    
+    def invert(self, M):
+        pole = self.pole
+        if np.isscalar(M) and isinf(M):
+            return pole
+        M = np.asarray(M)
+        if np.allclose(pole, M):
+            return inf
+        k = self.power
+        pole_M = M - pole
+        return pole + k/dot_(pole_M) * pole_M
+    
+    def invert_circle(self, circ):
+        c0 = self.pole
+        k = self.power
+        c1 = circ.center
+        r1 = circ.radius
+        D1 = (c1[0] - c0[0])**2 + (c1[1] - c0[1])**2 - r1*r1
+        if abs(D1) > sqrt(epsilon_):
+            s = k / D1
+            return Circle(c0 + s*(c1-c0), abs(s)*r1)
+        Ot = c0 - c1
+        R180 = c1 - Ot
+        R90 = np.array([-Ot[1], Ot[0]]) + c1
+        return Line(self.invert(R180), self.invert(R90))
+        
+
+
+def SteinerChain_phi0_(c0, n, shift):
+    R = c0.radius
+    O = c0.center
+    pi_over_n = pi / n
+    sine = sin(pi_over_n)
+    Cradius = R / (1 + sine)
+    Cside = Cradius * sine
+    circles0 = [None]*(n+1)
+    for i in range(n):
+        beta = (i + shift) * 2*pi_over_n
+        pti = Cradius * unit_vector_(beta) + O
+        circles0[i] = Circle(pti, Cside)
+    circles0[n] = Circle(O, R - 2*Cside)
+    return circles0
+
+def SteinerChain(c0, n, phi, shift, ellipse = False):
+    circles0 = SteinerChain_phi0_(c0 = c0, n = n, shift = shift)
+    if phi == 0:
+        return circles0
+    R = c0.radius
+    O = c0.center
+    invphi = 1 / phi
+    I = np.array([R*invphi, 0]) + O
+    r2 = R*R * (invphi*invphi - 1)
+    iota = Inversion(I, r2)
+    out = [iota.invert_circle(circle) for circle in circles0]
+    # if(ellipse){
+    #   O2 <- out[[n+1L]]$center
+    #   r <- out[[n+1L]]$radius
+    #   c <- (O2[1L] - O[1L])/2
+    #   a <- (r + R)/2
+    #   b <- sqrt(a*a - c*c)
+    #   attr(out, "ellipse") <- Ellipse$new((O+O2)/2, a, b, 0)
+    # }
+    return out
+
 
 
 class Triangle:
