@@ -1,6 +1,76 @@
-from math import acos, sqrt, tan
+from math import acos, sqrt, tan, atan2
 import numpy as np
-from .internal import distance_, vlength_, dot_
+from .internal import distance_, vlength_, dot_, det2x2_
+
+
+class Line:
+    def __init__(self, A, B, extendA=True, extendB=True):
+        self.A = np.asarray(A, dtype=float)
+        self.B = np.asarray(B, dtype=float)
+        self.extendA = extendA
+        self.extendB = extendB
+        
+    def __str__(self):
+        return str(self.__dict__)
+
+    def show(self):
+        print("Line:\n")
+        print("       A: ", tuple(self.A), "\n")
+        print("       B: ", tuple(self.B), "\n")
+        print(" extendA: ", self.extendA, "\n")
+        print(" extendB: ", self.extendB, "\n")
+        if self.extendA and self.extendB:
+            print("Infinite line passing through A and B.\n")
+        elif self.extendA:
+            print("Half-line with origin B and passing through A.\n")
+        elif self.extendB:
+            print("Half-line with origin A and passing through B.\n")
+        else:
+            print("Segment joining A and B.\n")
+        
+    def direction_offset(self):
+        A = self.A
+        B = self.B
+        if A[0]==B[0]:
+            if A[0]>0:
+                direction = 0.0
+                offset = A[0]
+            else:
+                direction = pi
+                offset = -A[0]
+        else:
+            x = B[0] - A[0]
+            y = B[1] - A[1]
+            theta = -atan2(x, y)
+            offset = A[0]*cos(theta) + A[1]*sin(theta)
+            if offset < 0:
+                theta = theta + pi
+                offset = -offset
+            direction = theta % (2*pi)
+        return {
+            "direction": direction,
+            "offset": offset
+        }
+    
+    def is_equal(self, line2):
+        do1 = self.direction_offset()
+        do2 = line2.direction_offset()
+        do1 = (do1["direction"] % pi, do1["offset"])
+        do2 = (do2["direction"] % pi, do2["offset"])
+        return np.allclose(do1, do2)
+    
+    def is_parallel(self, line2):
+        P1 = self.A
+        P2 = self.B
+        Q1 = line2.A
+        Q2 = line2.B
+        dx1 = P1[0] - P2[0]
+        dx2 = Q1[0] - Q2[0]
+        dy1 = P1[1] - P2[1]
+        dy2 = Q1[1] - Q2[1]
+        D = det2x2_((dx1, dy1), (dx2, dy2))
+        return abs(D) < sqrt(np.finfo(float).eps)
+
 
 
 class Circle:
