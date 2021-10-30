@@ -21,7 +21,7 @@ def line_line_intersection_(P1, P2, Q1, Q2):
     dy2 = Q1[1] - Q2[1]
     D = det2x2_((dx1, dy1), (dx2, dy2))
     if D == 0:
-      return None
+        return None
     D1 = det2x2_(P1, P2)
     D2 = det2x2_(Q1, Q2)
     return np.array([

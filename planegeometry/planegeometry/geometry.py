@@ -1,4 +1,4 @@
-from math import acos, sqrt, tan, atan2
+from math import acos, sqrt, tan, atan2, cos, sin, pi
 import numpy as np
 from .internal import distance_, vlength_, dot_, det2x2_, line_line_intersection_
 
