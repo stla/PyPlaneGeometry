@@ -14,7 +14,7 @@ def dot_(u, v=None):
 def det2x2_(row1, row2):
     return row1[0]*row2[1] - row2[0]*row1[1]
 
-def line_line_intersection(P1, P2, Q1, Q2):
+def line_line_intersection_(P1, P2, Q1, Q2):
     dx1 = P1[0] - P2[0]
     dx2 = Q1[0] - Q2[0]
     dy1 = P1[1] - P2[1]

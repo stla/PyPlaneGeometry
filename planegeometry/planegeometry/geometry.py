@@ -1,6 +1,6 @@
 from math import acos, sqrt, tan, atan2
 import numpy as np
-from .internal import distance_, vlength_, dot_, det2x2_
+from .internal import distance_, vlength_, dot_, det2x2_, line_line_intersection_
 
 
 class Line:
@@ -70,6 +70,20 @@ class Line:
         dy2 = Q1[1] - Q2[1]
         D = det2x2_((dx1, dy1), (dx2, dy2))
         return abs(D) < sqrt(np.finfo(float).eps)
+
+
+def intersection_line_line(line1, line2, strict=False):
+    if line1.is_equal(line2):
+        print("TO DO")
+        return
+    if line1.is_parallel(line2):
+        print("Distinct parallel lines.")
+        return None
+    I = line_line_intersection_(line1.A, line1.B, line2.A, line2.B)
+    if not strict:
+        return I
+    print("TO DO")
+    return
 
 
 
