@@ -10,7 +10,8 @@ from .internal import (
     epsilon_,
     ellipse_points_,
     collinear_,
-    circle_points_
+    circle_points_,
+    circle_as_ellipse_
 )
 
 
@@ -106,16 +107,16 @@ class Line:
                 return True
             print("The point is on the line (AB), but not on the segment [AB].")
             return False
-        elif extendA:
+        if extendA:
             if np.any((M-B)*(A-B)>0):
                 return True
             print("The point is on the line (AB), but not on the half-line (AB].")
             return False
-        else: # extendB
-            if np.any((M-A)*(B-A)>0):
-                return True
-            print("The point is on the line (AB), but not on the half-line [AB).")
-            return False
+        # extendB
+        if np.any((M-A)*(B-A)>0):
+            return True
+        print("The point is on the line (AB), but not on the half-line [AB).")
+        return False
     
     def perpendicular(self, M, extendH = False, extendM = True):
         """Perpendicular line passing through a given point.
@@ -195,7 +196,7 @@ class Circle:
         line2 = Line(P2, P2prime)
         perp1 = line1.perpendicular((P1+P1prime)/2)
         perp2 = line2.perpendicular((P2+P2prime)/2)
-        O = line_line_intersection(perp1.A, perp1.B, perp2.A, perp2.B)
+        O = line_line_intersection_(perp1.A, perp1.B, perp2.A, perp2.B)
         if arc:
             theta1 = atan2(P1[1]-O[1], P1[0]-O[0]) % (2*pi)
             theta2 = atan2(P2[1]-O[1], P2[0]-O[0]) % (2*pi)
@@ -203,8 +204,7 @@ class Circle:
                 O, distance_(O, P1),
                 min(theta1, theta2), max(theta1, theta2), False
             )
-        else:
-            return Circle(O, distance_(O, P1))
+        return Circle(O, distance_(O, P1))
     
     def orthogonalThroughTwoPointsOnCircle(self, alpha1, alpha2, arc = False):
         """
@@ -308,7 +308,7 @@ class Ellipse:
 
     def show(self):
         unit = "degree" if self.degrees else "radian"
-        s = "" if alpha == 1 else "s"
+        s = "" if self.alpha == 1 else "s"
         print("Ellipse:\n")
         print("       center: ", tuple(self.center), "\n")
         print(" major radius: ", self.rmajor, "\n")
@@ -318,7 +318,7 @@ class Ellipse:
     def path(self, n_points=100):
         """Path that forms the ellipse.
         
-        :param npoints: number of points of the path
+        :param n_points: number of points of the path
         :returns: A matrix with two columns and `n_points` rows.
         
         """
@@ -333,6 +333,36 @@ class Ellipse:
             self.rminor,
             alpha
         )
+    
+    def equation(self):
+        """The coefficients of the implicit equation of the ellipse, 
+        `Ax² + Bxy + Cy² + Dx + Ey + F = 0`.
+        
+        :returns: A dictionary giving the values of the coefficients.
+        
+        """
+        a2 = self.rmajor**2
+        b2 = self.rminor**2
+        alpha = self.alpha
+        if self.degrees:
+            alpha *= pi/180
+        x, y = self.center
+        sine = sin(alpha)
+        cosine = cos(alpha)
+        sine2 = sine*sine
+        cosine2 = 1 - sine2
+        A = a2*sine2 + b2*cosine2
+        B = 2*(b2-a2)*sine*cosine
+        C = a2*cosine2 + b2*sine2
+        return {
+            "A": A,
+            "B": B,
+            "C": C,
+            "D": -2*A*x - B*y,
+            "E": -B*x - 2*C*y,
+            "F": A*x*x + B*x*y + C*y*y - a2*b2
+        }        
+
 
 
 class Inversion:
@@ -395,7 +425,7 @@ def SteinerChain_phi0_(c0, n, shift):
     circles0[n] = Circle(O, R - 2*Cside)
     return circles0
 
-def SteinerChain(c0, n, phi, shift, ellipse = False):
+def SteinerChain(c0, n, phi, shift):
     circles = SteinerChain_phi0_(c0 = c0, n = n, shift = shift)
     R = c0.radius
     O = c0.center
@@ -638,4 +668,114 @@ class Triangle:
         return (point, detour)
 
 
+class Affine:
+    """A class for affine transformations.
+    
+    An affine transformation is initialized by a 2x2 matrix (a linear transformation), 
+    and a length two vector (the 'intercept', an array-like object).
+    
+    """
+    def __init__(self, A, b):
+        self.A = np.asarray(A, dtype=float)
+        self.b = np.asarray(b, dtype=float)
+        
+    def __str__(self):
+        return str(self.__dict__)
+
+    def show(self):
+        print("Affine map Ax + b:\n")
+        print("                 A: ", self.A, "\n")
+        print("                 b: ", self.b, "\n")
+    
+    def get3x3matrix(self):
+        """Get the 3x3 matrix corresponding to the affine transformation.
+        
+        """
+        b = self.b.reshape(2,1) 
+        return np.vstack((np.hstack((self.A, b)), np.array([0, 0, 1])))
+    
+    def inverse(self):
+        """The inverse affine transformation if it exists.
+        
+        """
+        if np.linalg.det(self.A) == 0:
+            print("The affine map is singular.")
+            return
+        M = np.linalg.inv(self.get3x3matrix())
+        return Affine(M[0:2, 0:2], M[0:2, -1])
+    
+    def compose(self, transfo, left=True):
+        """Compose the reference affine map with another affine map.
+        
+        :param transfo: an `Affine` object
+        :param left: Boolean, whether to compose at left or at right (i.e. returns `f1 o f0` or `f0 o f1`)
+        :returns: An `Affine` object.
+        
+        """
+        M0 = self.get3x3matrix()
+        M1 = transfo.get3x3matrix()
+        M = np.matmul(M1, M0) if left else np.matmul(M0, M1)
+        return Affine(M[0:2, 0:2], M[0:2, -1])
+    
+    def transform(self, m):
+        """Transform a point or several points by the affine map.
+        
+        :param m: a point or a two-column matrix of points, one point per row
+        :returns: a matrix or a vector
+        
+        """
+        b = self.b
+        if m.ndim == 2:
+            b = np.repeat(b.reshape(2,1), m.shape[1], axis=1)
+        return np.transpose(np.matmul(self.A, np.transpose(m)) + b)
+    
+    def transform_line(self, line):
+        """Transform a line by the affine map.
+        
+        
+        """
+        M = self.A
+        if np.linalg.det(M) == 0:
+            print("The affine map is singular.")
+            return
+        return Line(M.dot(line.A), M.dot(line.B), line.extendA, line.extendB)
+    
+    def transformEllipse(self, ell):
+        """Transform an ellipse by the reference affine transformation (only for an invertible affine map).
+        
+        :param ell: an `Ellipse` object or a `Circle` object
+        :returns: An `Ellipse` object.
+        
+        """
+        if np.linalg.det(self.A) == 0:
+            print("The affine map is singular.")
+            return
+        if isinstance(ell, Circle):
+            ell = circle_as_ellipse_(ell)
+        A, B, C, D, E, F = ell.equation().values()
+        X = np.array([
+            [A, B/2, D/2],
+            [B/2, C, E/2],
+            [D/2, E/2, F]
+        ])
+        Mat = np.linalg.inv(self.get3x3matrix())
+        Y = np.matmul(np.matmul(np.transpose(Mat), X), Mat) 
+        A = Y[0,0]
+        B = 2*Y[0,1]
+        C = Y[1,1]
+        D = 2*Y[0,2]
+        E = 2*Y[1,2]
+        F = Y[2,2]
+        Delta = B*B-4*A*C
+        s = sqrt((A-C)**2 + B*B)
+        V = np.array([s, -s])
+        a, b = - sqrt(
+            2*(A*E*E + C*D*D - B*D*E + Delta*F)*((A + C) + V)
+        ) / Delta 
+        x0 = (2*C*D - B*E) / Delta
+        y0 = (2*A*E - B*D) / Delta
+        theta = atan2(C - A - s, B)
+        degrees = ell.degrees
+        theta = (theta*180/pi) % 180 if degrees else (theta % pi)
+        return Ellipse((x0, y0), a, b, theta, degrees = degrees)
 

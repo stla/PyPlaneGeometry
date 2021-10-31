@@ -68,3 +68,7 @@ def collinear_(A, B, C, tol = 0):
     re2 = re*re
     im = z.imag
     return re2 / (re2 + im*im) >= 1 - tol
+
+def circle_as_ellipse_(C):
+    r = C.radius
+    return Ellipse(C.center, r, r, 0)
