@@ -10,8 +10,7 @@ from .internal import (
     epsilon_,
     ellipse_points_,
     collinear_,
-    circle_points_,
-    circle_as_ellipse_
+    circle_points_
 )
 
 
@@ -363,6 +362,10 @@ class Ellipse:
             "F": A*x*x + B*x*y + C*y*y - a2*b2
         }        
 
+
+def circle_as_ellipse_(C):
+    r = C.radius
+    return Ellipse(C.center, r, r, 0)
 
 
 class Inversion:
