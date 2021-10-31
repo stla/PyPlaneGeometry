@@ -232,6 +232,66 @@ class Circle:
                 center, r0, min(theta1,theta2), max(theta1,theta2), False
             )
         return Circle(center, r0)
+    
+    def power(self, M):
+        """Power of a point with respect to the reference circle.
+        
+        :param M: a point (array-like of length two)
+        :returns: A number, the power of `M` with respect to the circle.
+        
+        """
+        M = np.asarray(M, dtype=float)
+        radius = self.radius
+        return dot_(M - self.center) - radius*radius
+    
+    def radical_center(self, circ2):
+        """Radical center of two circles.
+        
+        :param circ2: a `Circle` object
+        :returns: the radical center of the reference circle and `circ2`.
+        
+        """
+        C1 = self.center
+        C2 = circ2.center
+        r1 = self.radius
+        r2 = circ2.radius
+        k = r1*r1 - r2*r2
+        C1_C2 = C2 - C1
+        C1C2sqr = dot_(C1_C2)
+        if C1C2sqr == 0:
+            return np.array([np.inf, np.inf])
+        return (C1 + C2)/2 + k/2 * C1_C2/C1C2sqr
+    
+    def radical_axis(self, circ2):
+        """Radical axis of two circles.
+        
+        :param circ2: a `Circle` object
+        :returns: A `Line` object, the radical axis of the reference circle and `circ2`.
+        
+        """
+        C1 = self.center
+        C2 = circ2.center
+        if np.allclose(C1, C2):
+            print("The two circles must have distinct centers.")
+            return
+        x, y = C2 - C1
+        v = np.array([-y, x])
+        R = self.radical_center(circ2)
+        return Line(R, R+v, True, True)
+
+
+def radical_center(circ1, circ2, circ3):
+    """Radical center of three circles.
+    
+    :param circ1,circ2,circ3: `Circle` objects
+    :returns: A point, the radical center of the three circles.
+    
+    """
+    l1 = circ1.radical_axis(circ2)
+    l2 = circ1.radical_axis(circ3)
+    return line_line_intersection_(l1.A, l1.B, l2.A, l2.B)
+    
+
 
 class Arc:
     """Arc class.
@@ -410,7 +470,72 @@ class Inversion:
         R180 = c1 - Ot
         R90 = np.array([-Ot[1], Ot[0]]) + c1
         return Line(self.invert(R180), self.invert(R90))
+    
+    @classmethod
+    def from_swapping_two_circles(cls, circ1, circ2, positive=True):
+        """Inversion swapping two circles.
         
+        :param circ1,circ2: `Circle` objects
+        :param positive: Boolean, whether the sign of the desired inversion power must be positive or negative
+        :returns: An `Inversion` object, which maps `circ1` to `circ2` and `circ2` to `circ1`, except in the case when `circ1` and `circ2` are congruent and tangent: in this case a `Reflection` object is returned (a reflection is an inversion on a line).
+        
+        """
+        c1 = circ1.center
+        r1 = circ1.radius
+        c2 = circ2.center
+        r2 = circ2.radius
+        c1c2 = distance_(c1, c2)
+        if r1 == r2:
+            I = (c1 + c2) / 2
+            if c1c2 < r1+r2: # they intersect at two points or are equal
+                if not positive:
+                    print("`positive = False` not possible; switching to `True`")
+                k = abs(dot_(I - c2) - r2*r2)
+                return Inversion(I, k)
+            if c1c2 > r1+r2: # they do not intersect
+                if positive:
+                    print("`positive = True` not possible; switching to `False`")
+                k = -abs(dot_(I - c2) - r2*r2)
+                return Inversion(I, k)
+            # they touch
+            print("No possible inversion; returning a reflection")
+            x, y = c2 - c1
+            v = np.array([-y, x])
+            print("TO DO")
+            return#Reflection(Line(I+v, I-v))
+        inside = inside_tangent = False
+        if max(r1, r2) >= c1c2 + min(r1, r2):
+            inside = True
+            inside_tangent = max(r1, r2) == c1c2 + min(r1, r2)
+        if (not positive) and ((not inside) or inside_tangent):
+            they_intersect = c1c2 <= r1+r2
+            if they_intersect:
+                print("`positive = False` not possible; switching to `True`")
+                positive = True
+        a = r1 / r2
+        if positive:
+            if inside:
+                O = c1 + a/(1+a) * (c2 - c1)
+            else:
+                O = c1 - a/(1-a) * (c2 - c1)
+            return Inversion(O, a * abs(dot_(O - c2) - r2*r2))
+        if inside:
+            O = c1 - a/(1-a) * (c2 - c1)
+        else:
+            O = c1 + a/(1+a) * (c2 - c1)
+        return Inversion(O, -a * abs(dot_(O - c2) - r2*r2))
+
+    @classmethod
+    def from_fixing_three_circles(cls, circ1, circ2, circ3):
+        """Inversion fixing three circles.
+        
+        :param circ1,circ2,circ3: `Circle` objects
+        :returns: an `Inversion` object representing an inversion which leaves each of the three circles invariant.
+        
+        """
+        Rc = radical_center(circ1, circ2, circ3)
+        return Inversion(Rc, circ1.power(Rc))
+
 
 
 def SteinerChain_phi0_(c0, n, shift):
