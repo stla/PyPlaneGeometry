@@ -2,13 +2,13 @@
 
 Plane geometry with Python.
 
-![](https://github.com/stla/PyPlaneGeometry/raw/main/examples/triangularApollonianGasket.png)
+![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/triangularApollonianGasket.png)
 
-![](https://github.com/stla/PyPlaneGeometry/raw/main/examples/ApollonianIcosahedralGasket.png)
+![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/ApollonianIcosahedralGasket.png)
 
-![](https://github.com/stla/PyPlaneGeometry/raw/main/examples/NestedSteinerChains.png)
+![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/NestedSteinerChains.png)
 
-![](https://github.com/stla/PyPlaneGeometry/raw/main/examples/SteinerChainWithEllipse.png)
+![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/SteinerChainWithEllipse.png)
 
-![](https://github.com/stla/PyPlaneGeometry/raw/main/examples/HyperbolicTesselation.png)
+![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/HyperbolicTesselation.png)
 
