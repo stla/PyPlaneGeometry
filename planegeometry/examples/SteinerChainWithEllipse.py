@@ -10,7 +10,7 @@ ellipse = chain["ellipse"]
 ellipse_path = ellipse.path()
 
 
-figure, axes = plt.subplots()
+figure, axes = plt.subplots(figsize=(10, 10))
 axes.set_aspect(1)
 
 def draw_circle(C, color):

@@ -98,7 +98,7 @@ class Line:
                 return False
         extendA = self.extendA
         extendB = self.extendB
-        if !strict or (extendA and extendB):
+        if (not strict) or (extendA and extendB):
             return collinear_(A, B, M)
         if (not extendA) and (not extendB):
             dotprod = dot_(A-M, B-M)
@@ -112,7 +112,7 @@ class Line:
             print("The point is on the line (AB), but not on the half-line (AB].")
             return False
         else: # extendB
-            if np.any((M-A)*(B-A)>0)
+            if np.any((M-A)*(B-A)>0):
                 return True
             print("The point is on the line (AB), but not on the half-line [AB).")
             return False
@@ -165,7 +165,74 @@ class Circle:
         print("Circle:\n")
         print(" center: ", tuple(self.center), "\n")
         print(" radius: ", self.radius, "\n")
+        
+    def orthogonalThroughTwoPointsWithinCircle(self, P1, P2, arc = False):
+        """Orthogonal circle passing through two points within the reference circle.
+        
+        :param P1,P2: two distinct points in the interior of the reference circle
+        :param arc: Boolean,  whether to return the arc joining the two points instead of the circle
+        :returns: A `Circle` object or an `Arc` object, or a `Line` object if the two points are on a diameter.
 
+        """
+        if np.allclose(P1, P2):
+            print("`P1` and `P2` must be distinct.")
+            return
+        I = self.center
+        r = self.radius
+        r2 = r * r
+        if distance_(P1, I) >= r2:
+            print("`P1` is not in the interior of the reference circle.")
+            return
+        if distance_(P2,I) >= r2:
+            print("`P2` is not in the interior of the reference circle.")
+            return
+        if collinear_(I, P1, P2):
+            return Line(P1, P2, not arc, not arc)
+        iota = Inversion(I, r2)
+        P1prime = iota.invert(P1)
+        P2prime = iota.invert(P2)
+        line1 = Line(P1, P1prime)
+        line2 = Line(P2, P2prime)
+        perp1 = line1.perpendicular((P1+P1prime)/2)
+        perp2 = line2.perpendicular((P2+P2prime)/2)
+        O = line_line_intersection(perp1.A, perp1.B, perp2.A, perp2.B)
+        if arc:
+            theta1 = atan2(P1[1]-O[1], P1[0]-O[0]) % (2*pi)
+            theta2 = atan2(P2[1]-O[1], P2[0]-O[0]) % (2*pi)
+            return Arc(
+                O, distance_(O, P1),
+                min(theta1, theta2), max(theta1, theta2), False
+            )
+        else:
+            return Circle(O, distance_(O, P1))
+    
+    def orthogonalThroughTwoPointsOnCircle(self, alpha1, alpha2, arc = False):
+        """
+        
+        
+        """
+        I = self.center
+        r = self.radius
+        dalpha = alpha1 - alpha2
+        if dalpha % pi == 0:
+            eialpha1 = unit_vector_(alpha1)
+            A = I + r*eialpha1
+            B = I - r*eialpha1
+            return Line(A, B, not arc, not arc)
+        r0 = r * abs(tan(dalpha/2))
+        IO = r / cos(dalpha/2)
+        center = I + IO * unit_vector_((alpha1+alpha2)/2)
+        if arc:
+            dalpha = (alpha2-alpha1) % (2*pi)# - alpha1%%(2*pi)
+            delta = pi if dalpha >= pi else 0
+            beta1 = -pi/2 + delta
+            beta2 = beta1 - pi + dalpha
+            theta1 = beta1+alpha1 #%% (2*pi)
+            theta2 = beta2+alpha1 #%% (2*pi)
+            return Arc(
+                center, r0, min(theta1,theta2), max(theta1,theta2), False
+            )
+        return Circle(center, r0)
 
 class Arc:
     """Arc class.
@@ -197,7 +264,7 @@ class Arc:
     def path(self, n_points=100):
         """Path that forms the arc.
         
-        :param npoints: number of points of the path
+        :param n_points: number of points of the path
         :returns: A matrix with two columns and `n_points` rows.
         
         """

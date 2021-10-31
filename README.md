@@ -10,3 +10,5 @@ Plane geometry with Python.
 
 ![](https://github.com/stla/PyPlaneGeometry/raw/main/examples/SteinerChainWithEllipse.png)
 
+![](https://github.com/stla/PyPlaneGeometry/raw/main/examples/HyperbolicTesselation.png)
+

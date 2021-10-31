@@ -8,7 +8,7 @@ circles = g.SteinerChain(c0, 3, -0.2, 0.5)["circles"]
 # Steiner chain for each circle, except the small one (it is too small)
 chains = [g.SteinerChain(c, 3, -0.2, 0.5)["circles"] for c in circles[:3]]
 # draw the big Steiner chain
-figure, axes = plt.subplots()
+figure, axes = plt.subplots(figsize=(10, 10))
 axes.set_aspect(1)
 def draw_circle(C, color):
     axes.add_artist(plt.Circle(C.center, C.radius, fill=False, color=color))
