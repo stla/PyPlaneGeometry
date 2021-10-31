@@ -4,9 +4,9 @@ import planegeometry.geometry as g
 
 
 c0 = g.Circle((3,0), 3) # exterior circle
-circles = g.SteinerChain(c0, 3, -0.2, 0.5)["circles"]
+circles = g.SteinerChain(c0, 3, -0.5, 1)["circles"]
 # Steiner chain for each circle, except the small one (it is too small)
-chains = [g.SteinerChain(c, 3, -0.2, 0.5)["circles"] for c in circles[:3]]
+chains = [g.SteinerChain(c, 3, -0.4, 0.5)["circles"] for c in circles[:3]]
 # draw the big Steiner chain
 figure, axes = plt.subplots(figsize=(10, 10))
 axes.set_aspect(1)

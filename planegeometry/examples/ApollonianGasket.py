@@ -57,7 +57,8 @@ axes.set_aspect(1)
 def draw_circle(C, color, fill=True):
     axes.add_artist(
         plt.Circle(
-            C.center, C.radius, fill=fill, facecolor=color, edgecolor="black"
+            C.center, C.radius, fill=fill, facecolor=color, 
+            edgecolor="black", linewidth=2
         )
     )
 draw_circle(c0, "black", False)

@@ -17,3 +17,9 @@ Plane geometry with Python.
 ![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/EllipticalSteinerChain3D.gif)
 
 ![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/ApollonianGasket.png)
+
+![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/NestedSteinerChains.gif)
+
+![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/EllipticalNestedSteinerChains.gif)
+
+![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/EllipticalNestedSteinerChains3D.gif)
