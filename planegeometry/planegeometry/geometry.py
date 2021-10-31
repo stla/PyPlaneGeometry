@@ -740,7 +740,7 @@ class Affine:
             return
         return Line(M.dot(line.A), M.dot(line.B), line.extendA, line.extendB)
     
-    def transformEllipse(self, ell):
+    def transform_ellipse(self, ell):
         """Transform an ellipse by the reference affine transformation (only for an invertible affine map).
         
         :param ell: an `Ellipse` object or a `Circle` object
@@ -761,16 +761,16 @@ class Affine:
         Mat = np.linalg.inv(self.get3x3matrix())
         Y = np.matmul(np.matmul(np.transpose(Mat), X), Mat) 
         A = Y[0,0]
-        B = 2*Y[0,1]
+        B = 2 * Y[0,1]
         C = Y[1,1]
-        D = 2*Y[0,2]
-        E = 2*Y[1,2]
+        D = 2 * Y[0,2]
+        E = 2 * Y[1,2]
         F = Y[2,2]
-        Delta = B*B-4*A*C
+        Delta = B*B - 4*A*C
         s = sqrt((A-C)**2 + B*B)
         V = np.array([s, -s])
-        a, b = - sqrt(
-            2*(A*E*E + C*D*D - B*D*E + Delta*F)*((A + C) + V)
+        a, b = - np.sqrt(
+            2 * (A*E*E + C*D*D - B*D*E + Delta*F)*((A + C) + V)
         ) / Delta 
         x0 = (2*C*D - B*E) / Delta
         y0 = (2*A*E - B*D) / Delta
@@ -778,4 +778,68 @@ class Affine:
         degrees = ell.degrees
         theta = (theta*180/pi) % 180 if degrees else (theta % pi)
         return Ellipse((x0, y0), a, b, theta, degrees = degrees)
-
+    
+    @classmethod
+    def from_three_points(cls, P1, P2, P3, Q1, Q2, Q3):
+        """Affine transformation mapping three given points to three given points.
+        
+        :param P1,P2,P3: three non-collinear points
+        :param Q1,Q2,Q3: three non-collinear points
+        :returns: An `Affine` object representing the transformation which maps Pi to Qi for each i=1,2,3.
+        
+        """
+        P1 = np.asarray(P1, dtype=float)
+        P2 = np.asarray(P2, dtype=float)
+        P3 = np.asarray(P3, dtype=float)
+        Q1 = np.asarray(Q1, dtype=float)
+        Q2 = np.asarray(Q2, dtype=float)
+        Q3 = np.asarray(Q3, dtype=float)
+        if collinear_(P1, P2, P3):
+            print("P1, P2 and P3 are collinear.")
+            return
+        if collinear_(Q1, Q2, Q3):
+            print("Q1, Q2 and Q3 are collinear.")
+            return
+        f1 = Affine(np.transpose(np.column_stack((P2-P1, P3-P1))), P1)
+        f2 = Affine(np.transpose(np.column_stack((Q2-Q1, Q3-Q1))), Q1)
+        return f1.inverse().compose(f2)
+    
+    @classmethod
+    def from_ellipse_to_ellipse(cls, ell1, ell2):
+        """Affine transformation mapping a given ellipse to a given ellipse.
+        
+        :param ell1,ell2: `Ellipse` or `Circle` objects
+        :returns: An `Affine` object representing the transformation which maps `ell1` to `ell2`.
+        
+        """
+        if isinstance(ell1, Circle):
+            a = b = ell1.radius
+            costheta = 1
+            sintheta = 0
+        else:
+            a = ell1.rmajor
+            b = ell1.rminor
+            theta = ell1.alpha
+            if ell1.degrees:
+                theta *= pi/180
+            costheta = cos(theta)
+            sintheta = sin(theta)
+        col1 = a * np.array([costheta, sintheta])
+        col2 = b * np.array([-sintheta, costheta])
+        f1 = Affine(np.column_stack((col1, col2)), ell1.center)
+        if isinstance(ell2, Circle):
+            a = b = ell2.radius
+            costheta = 1
+            sintheta = 0
+        else:
+            a = ell2.rmajor
+            b = ell2.rminor
+            theta = ell2.alpha
+            if ell2.degrees:
+                theta *= pi/180
+            costheta = cos(theta)
+            sintheta = sin(theta)
+        col1 = a * np.array([costheta, sintheta])
+        col2 = b * np.array([-sintheta, costheta])
+        f2 = Affine(np.column_stack((col1, col2)), ell2.center)
+        return f1.inverse().compose(f2)
