@@ -74,3 +74,8 @@ def collinear_(A, B, C, tol = 0):
 
 def from_complex_(z):
     return np.array([z.real, z.imag])
+
+def mod2_(z):
+    re = z.real
+    im = z.imag
+    return re*re + im*im

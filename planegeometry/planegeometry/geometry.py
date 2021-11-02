@@ -1,4 +1,4 @@
-from math import acos, sqrt, tan, atan2, cos, sin, pi, inf, isinf
+from math import acos, sqrt, tan, atan2, cos, sin, pi, inf, isinf, isclose
 import numpy as np
 from .internal import (
     distance_,
@@ -12,7 +12,8 @@ from .internal import (
     collinear_,
     circle_points_,
     det2x2_mat_,
-    from_complex_
+    from_complex_,
+    mod2_
 )
 
 
@@ -167,6 +168,31 @@ class Circle:
         print("Circle:\n")
         print(" center: ", tuple(self.center), "\n")
         print(" radius: ", self.radius, "\n")
+        
+    def includes(self, P):
+        """Check whether a point belongs to the reference circle.
+        
+        :param P: a point
+        :returns: A Boolean value.
+        
+        """
+        P = np.asarray(P, dtype=float)
+        r = self.radius
+        O = self.center
+        d2 = dot_(P-O)
+        return isclose(d2, r*r)
+    
+    def point_from_angle(self, alpha, degrees=True):
+        """Get a point on the reference circle from its polar angle.
+        
+        :param alpha: a number, the angle
+        :param degrees: Boolean, whether the angle is given in degrees
+        :returns: The point on the circle with polar angle `alpha`.
+        
+        """
+        if degrees:
+            alpha *= pi/180
+        return self.center + self.radius * unit_vector_(alpha)
         
     def orthogonalThroughTwoPointsWithinCircle(self, P1, P2, arc = False):
         """Orthogonal circle passing through two points within the reference circle.
@@ -1100,4 +1126,136 @@ class Mobius:
         z = complex(*P)
         condition = c != 0 and z == -d/c
         return inf if condition else from_complex_((a*z+b)/(c*z+d))
+    
+    def transform_circle(self, circ):
+        """Transform a circle by the Möbius transformation.
         
+        :param circ: a `Circle` object
+        :returns: A `Circle` object or a `Line` object.
+        
+        """
+        if not isinstance(circ, Circle):
+            raise ValueError("`circ` must be a `Circle` object.")
+        c = self.c
+        d = self.d
+        R = circ.radius
+        z0 = complex(*circ.center)
+        x1 = mod2_(d + c*z0)
+        x2 = R*R*mod2_(c)
+        if x1 != x2: # we are in this case if c=0
+            if x1 > 0:
+                z = z0 if c == 0 else z0 - R*R / (d/c + z0).conjugate()
+                w0 = self.transform(from_complex_(z))
+            else:
+                w0 = self.transform(inf)
+            v = w0 - self.transform(from_complex_(z0 + R))
+            return Circle(w0, abs(complex(*v)))
+        M = from_complex_(-d/c)
+        if c != 0 and circ.includes(M):
+            alpha = 0.0
+            while True:
+                P = circ.point_from_angle(alpha, degrees=False)
+                if not np.allclose(P, M):
+                    break
+                alpha += 0.1
+            while True:
+                Q = circ.point_from_angle(alpha+3, degrees=False)
+                if not np.allclose(Q, M):
+                    break
+                alpha += 0.1
+            A = self.transform(P)
+            B = self.transform(Q)
+        else:
+            A = self.transform(circ.point_from_angle(0))
+            B = self.transform(circ.point_from_angle(180, degrees=True))
+        return Line(A, B)
+    
+    def transform_line(self, line):
+        """Transform a line by the Möbius transformation.
+        
+        :param line: a `Line` object
+        :returns: A `Circle` object or a `Line` object.
+        
+        """
+        if not isinstance(line, Line):
+            raise ValueError("`line` must be a `Line` object.")
+        a = self.a
+        b = self.b
+        c = self.c
+        d = self.d
+        do = line.direction_offset()
+        theta = do["direction"]
+        gamma0 = complex(*unit_vector_(theta))
+        D0 = 2 * do["offset"]
+        A = -2 * (gamma0 * c * d.conjugate()).real - D0 * mod2_(c)
+        gamma = gamma0.conjugate() * b * c.conjugate() + gamma0 * d.conjugate() * a + D0 * c.conjugate() *a
+        D = D0 * mod2_(a) + 2 * (gamma0 * b.conjugate() * a).real
+        if abs(A) > sqrt(epsilon_):
+            return Circle(from_complex_(gamma/A), sqrt(mod2_(gamma)/A/A + D/A))
+        return Line(self.transform(line.A), self.transform(line.B))
+    
+    @classmethod
+    def from_three_points(cls, P1, P2, P3, Q1, Q2, Q3):
+        """Möbius transformation mapping three given points to three given points.
+        
+        :param P1,P2,P3: three distinct points, `inf` allowed
+        :param Q1,Q2,Q3: three distinct points, `inf` allowed
+        :returns: A `Mobius` object, representing the Möbius transformation which sends `Pi` to `Qi` for each i=1,2,3.
+            
+        """
+        if isinf(P1):
+            P1 = [inf]
+        if isinf(P2):
+            P2 = [inf]
+        if isinf(P3):
+            P3 = [inf]
+        if isinf(Q1):
+            Q1 = [inf]
+        if isinf(Q2):
+            Q2 = [inf]
+        if isinf(Q3):
+            Q3 = [inf]
+        z1 = complex(*np.asarray(P1))
+        z2 = complex(*np.asarray(P2))
+        z3 = complex(*np.asarray(P3))
+        if z1 == z2 or z1 == z3 or z2 == z3:
+            print("`P1`, `P2` and `P3` must be distinct.")
+            return
+        Mob1 = MobiusMappingThreePoints2ZeroOneInf_(z1, z2, z3)
+        w1 = complex(*np.asarray(Q1))
+        w2 = complex(*np.asarray(Q2))
+        w3 = complex(*np.asarray(Q3))
+        if w1 == w2 or w1 == w3 or w2 == w3:
+            print("`Q1`, `Q2` and `Q3` must be distinct.")
+            return
+        Mob2 = MobiusMappingThreePoints2ZeroOneInf_(w1, w2, w3)
+        return Mob1.compose(Mob2.inverse())
+
+
+def MobiusMappingThreePoints2ZeroOneInf_(z1, z2, z3):
+    if isinf(z1.real):
+        M = np.array([
+            [0, z2 - z3],
+            [1, z3]
+        ])
+        return Mobius(M)
+    if isinf(z2.real):
+        M = np.array([
+            [1, -z1],
+            [1, -z3]
+        ])
+        return Mobius(M)
+    if isinf(z3.real):
+        K = 1 / (z2 - z1)
+        M = np.array([
+            [K,  K * z1],
+            [0, 1]
+        ])
+        return Mobius(M)
+    K = (z2 - z3) / (z2 - z1)
+    M = np.array([
+        [K,  -K * z1],
+        [1, -z3]
+    ])
+    return Mobius(M)
+
