@@ -10,7 +10,9 @@ from .internal import (
     epsilon_,
     ellipse_points_,
     collinear_,
-    circle_points_
+    circle_points_,
+    det2x2_mat_,
+    from_complex_
 )
 
 
@@ -971,3 +973,131 @@ class Affine:
         col2 = b * np.array([-sintheta, costheta])
         f2 = Affine(np.column_stack((col1, col2)), ell2.center)
         return f1.inverse().compose(f2)
+
+
+class Mobius:
+    """A class for Möbius transformations.
+    
+    A Möbius transformation is initialized by a complex 2x2 matrix with a  
+    non-zero determinant.
+    
+    """
+    def __init__(self, M):
+        self.M = np.asarray(M, dtype=complex)
+        
+    def __str__(self):
+        return str(self.__dict__)
+
+    def show(self):
+        print("Möbius transformation:\n")
+        print("                     M: ", self.M, "\n")
+        
+    @property
+    def a(self):
+        return self.M[0, 0]
+    
+    @property
+    def b(self):
+        return self.M[0, 1]
+
+    @property
+    def c(self):
+        return self.M[1, 0]
+    
+    @property
+    def d(self):
+        return self.M[1, 1]
+
+    def compose(self, M1, left=True):
+        """Compose the reference Möbius transformation with another Möbius transformation.
+        
+        :param M1: a `Mobius` object
+        :param left: Boolean, whether to compose at left or at right (i.e. returns `M1 o M0` or `M0 o M1`)
+        :returns: A `Mobius` object.
+        
+        """
+        A = self.M
+        B = M1.M
+        return Mobius(np.matmul(B, A)) if left else Mobius(np.matmul(A, B)) 
+
+    def inverse(self):
+        """Inverse of the Möbius transformation.
+        
+        """
+        return Mobius(np.array([
+                [self.d, -self.b],
+                [-self.c, self.a]
+            ]))
+
+    def power(self, k):
+        """Power of the Möbius transformation.
+
+        :param k: an integer, possibly negative
+        :returns: A `Mobius` object corresponding to the Möbius transformation raised to the power `k`.
+        
+        """
+        t = int(k)
+        if t != k:
+            raise ValueError("The power `k` must be an integer.")
+        M = self.M
+        if t < 0:
+            M = M.inverse()
+            t = -t
+        return Mobius(np.linalg.matrix_power(M, t))
+    
+    def gpower(self, t):
+        """Generalized power of the Möbius transformation.
+
+        :param t: a float, possibly negative
+        :returns: A `Mobius` object corresponding to the Möbius transformation raised to the power `t`.
+        
+        """
+        M = self.M
+        detM = det2x2_mat_(M)
+        trM = M[0, 0] + M[1, 1]
+        if abs(trM*trM - 4*detM) < sqrt(epsilon_):
+            alpha = trM / 2
+            D = np.diag((alpha, alpha))
+            if np.allclose(M, D):
+                alpha_t = alpha**t
+                return Mobius(np.diag(alpha_t, alpha_t))
+            N = M - D
+            if np.allclose(N[:, 1], np.zeros((2,))):
+                v2 = np.array([1.0, 0.0])
+                v1 = N[:, 0]
+            else:
+                v2 = np.array([0.0, 1.0])
+                v1 = N[:, 1]
+            P = np.column_stack((v1, v2))
+            alpha_t = alpha**t
+            Jt = np.array([
+                    [alpha_t, t*alpha**(t-1)],
+                    [0.0, alpha_t]
+                ])
+            return Mobius(np.matmul(np.matmul(P, Jt), np.linalg.inv(P)))
+        eigen_values, eigen_vectors = np.linalg.eig(M)
+        Dt = np.diag(eigen_values**t)
+        return Mobius(
+            np.matmul(
+                np.matmul(eigen_vectors, Dt), np.linalg.inv(eigen_vectors)
+            )
+        )
+
+    def transform(self, P):
+        """Transform a point by the Möbius transformation.
+        
+        :param P: a point (array-like of length two) or `inf`
+        :returns: The image of `P` by the Möbius transformation (can be `inf`).
+        
+        """
+        a = self.a
+        b = self.b
+        c = self.c
+        d = self.d
+        if isinf(P):
+            return inf if c == 0 else from_complex_(a / c)
+        P = np.asarray(P)
+        z = complex(*P)
+        condition = c != 0 and z == -d/c
+        return inf if condition else from_complex_((a*z+b)/(c*z+d))
+        

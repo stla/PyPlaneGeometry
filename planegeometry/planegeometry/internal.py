@@ -17,6 +17,9 @@ def dot_(u, v=None):
 def det2x2_(row1, row2):
     return row1[0]*row2[1] - row2[0]*row1[1]
 
+def det2x2_mat_(M):
+    return det2x2_(M[0, :], M[1, :])
+
 def line_line_intersection_(P1, P2, Q1, Q2):
     dx1 = P1[0] - P2[0]
     dx2 = Q1[0] - Q2[0]
@@ -69,3 +72,5 @@ def collinear_(A, B, C, tol = 0):
     im = z.imag
     return re2 / (re2 + im*im) >= 1 - tol
 
+def from_complex_(z):
+    return np.array([z.real, z.imag])
