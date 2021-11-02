@@ -1,5 +1,16 @@
 from math import cos, sin
 import numpy as np
+from fractions import Fraction as Fr
+
+def farey_(n):
+    return [Fr(0, 1)] + sorted(
+        {Fr(m, k) for k in range(1, n+1) for m in range(1, k+1)}
+    )
+
+def farey_stack_(n):
+    fractions = farey_(n)
+    lists = [[f.denominator, f.numerator] for f in fractions]
+    return [lists[i] + lists[i+1] for i in range(len(lists)-1)]
 
 epsilon_ = np.finfo(float).eps
 

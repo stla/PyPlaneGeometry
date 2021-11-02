@@ -1,5 +1,6 @@
 from math import acos, sqrt, tan, atan2, cos, sin, pi, inf, isinf, isclose
 import numpy as np
+from functools import reduce
 from .internal import (
     distance_,
     vlength_,
@@ -13,7 +14,8 @@ from .internal import (
     circle_points_,
     det2x2_mat_,
     from_complex_,
-    mod2_
+    mod2_,
+    farey_stack_
 )
 
 def is_inf(x):
@@ -1261,3 +1263,20 @@ def MobiusMappingThreePoints2ZeroOneInf_(z1, z2, z3):
     ])
     return Mobius(M)
 
+def unimodular_matrices(n):
+    """Generates unimodular matrices.
+    
+    :param n: integer, the maximum size of entries of matrices, at least 1
+    :returns: List of unimodular matrices.
+    
+    """
+    if not isinstance(n, int):
+        raise ValueError("`n` must be an integer.")
+    if n < 1:
+        raise ValueError("`n` must be at least one.")
+    I2 = np.eye(2, dtype=int)
+    if n == 1:
+        return [I2]
+    out = [farey_stack_(i) for i in range(1, n+1)]
+    out = np.unique(np.array(reduce(lambda x, y: x + y, out)), axis = 0)
+    return [I2] + [arr.reshape((2,2), order="F") for arr in out] 
