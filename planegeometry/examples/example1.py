@@ -24,3 +24,10 @@ A = np.array([
 M = g.Mobius(A)
 print(M.power(2))
 print(M.gpower(2))
+
+print("******************************")
+circ = g.Circle((0,0), 3)
+circ2 = M.transform_circle(circ)
+A = circ.point_from_angle(1)
+B = M.transform(A)
+print(circ2.includes(B))

@@ -16,6 +16,8 @@ from .internal import (
     mod2_
 )
 
+def is_inf(x):
+    return isinstance(x, float) and isinf(x)
 
 class Line:
     def __init__(self, A, B, extendA=True, extendB=True):
@@ -1120,7 +1122,7 @@ class Mobius:
         b = self.b
         c = self.c
         d = self.d
-        if isinf(P):
+        if is_inf(P):
             return inf if c == 0 else from_complex_(a / c)
         P = np.asarray(P)
         z = complex(*P)
@@ -1203,17 +1205,17 @@ class Mobius:
         :returns: A `Mobius` object, representing the Möbius transformation which sends `Pi` to `Qi` for each i=1,2,3.
             
         """
-        if isinf(P1):
+        if is_inf(P1):
             P1 = [inf]
-        if isinf(P2):
+        if is_inf(P2):
             P2 = [inf]
-        if isinf(P3):
+        if is_inf(P3):
             P3 = [inf]
-        if isinf(Q1):
+        if is_inf(Q1):
             Q1 = [inf]
-        if isinf(Q2):
+        if is_inf(Q2):
             Q2 = [inf]
-        if isinf(Q3):
+        if is_inf(Q3):
             Q3 = [inf]
         z1 = complex(*np.asarray(P1))
         z2 = complex(*np.asarray(P2))
