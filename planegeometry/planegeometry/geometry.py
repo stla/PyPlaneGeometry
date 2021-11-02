@@ -1280,3 +1280,89 @@ def unimodular_matrices(n):
     out = [farey_stack_(i) for i in range(1, n+1)]
     out = np.unique(np.array(reduce(lambda x, y: x + y, out)), axis = 0)
     return [I2] + [arr.reshape((2,2), order="F") for arr in out] 
+
+
+class Reflection:
+    """A class for reflections.
+    
+    A reflection is initialized by a line.
+    
+    """
+    def __init__(self, line):
+        if not isinstance(line, Line):
+            raise ValueError("You must supply a `Line` object to initialize a reflection.")
+        self.line = Line(line.A, line.B, True, True)
+        
+    def __str__(self):
+        return str(self.__dict__)
+
+    def show(self):
+        print("Reflection with respect to the line passing through A and B.\n")
+        print("                 A: ", self.line.A, "\n")
+        print("                 B: ", self.line.B, "\n")
+    
+    def get3x3matrix(self):
+        """Augmented matrix of the reflection.
+        
+        """
+        line = self.line
+        Q = line.A
+        w = line.B - line.A
+        wt = np.array([-w[1], w[0]])
+        v = np.array([0.0, 0.0, 1.0])
+        v_reshaped = v.reshape((3,1))
+        M1 = np.hstack(
+            (
+                np.array([w, wt, Q]), 
+                v_reshaped
+            )    
+        )
+        M2 = np.hstack(
+            (
+                np.array([w, -wt, Q]), 
+                v_reshaped
+            )    
+        )
+        M = np.matmul(np.linalg.inv(M1), M2)
+        M[:, 2] = M[2, :]
+        M[2, :] = v
+        return M
+    
+    def transform(self, P):
+        """Transform a point by the refection.
+        
+        :param P: a point, `inf` allowed
+        :returns: The image of `P`.
+        
+        """
+        if is_inf(P):
+            return inf
+        P = np.asarray(P, dtype=float)
+        line = self.line
+        if line.includes(P):
+            return P
+        perp = line.perpendicular(P, False, False)
+        return P + 2 * (perp.A - perp.B)
+        
+    def transform_circle(self, circ):
+        """Reflect a circle.
+        
+        :param circ: a `Circle` object
+        :returns: A `Circle` object.
+        
+        """
+        return Circle(self.transform(circ.center), circ.radius)
+
+    def transform_line(self, line):
+        """Reflect a line.
+        
+        :param line: a `Line` object
+        :returns: A `Line` object.
+        
+        """
+        return Line(
+            self.transform(line.A), self.transform(line.B),
+            line.extendA, line.extendB
+        )
+
+
