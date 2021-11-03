@@ -16,7 +16,9 @@ from .internal import (
     from_complex_,
     mod2_,
     farey_stack_,
-    error_if_not_point_
+    error_if_not_point_,
+    error_if_not_number_,
+    error_if_not_positive_
 )
 
 def is_inf(x):
@@ -642,6 +644,16 @@ class Inversion:
         R180 = c1 - Ot
         R90 = np.array([-Ot[1], Ot[0]]) + c1
         return Line(self.invert(R180), self.invert(R90))
+
+    def invert_line(self, line):
+        c0 = self.pole
+        A = line.A
+        B = line.B
+        if collinear_(A, B, c0):
+            return line
+        Ap = self.invert(A)
+        Bp = self.invert(B)
+        return Triangle(c0, Ap, Bp).circumcircle()
     
     @classmethod
     def from_swapping_two_circles(cls, circ1, circ2, positive=True):
@@ -913,6 +925,29 @@ class Triangle:
         center = (a*A + b*B + c*C) / p
         radius = areaABC / s
         return Circle(center, radius)
+    
+    def circumcircle(self):
+        if self.flatness == 1:
+            print("The triangle is flat.")
+            return None
+        A = self.A
+        B = self.B
+        C = self.C
+        q = np.array([dot_(A), dot_(B), dot_(C)])
+        ABC = np.array([A, B, C])
+        ones = np.array([[1.0], [1.0], [1.0]])
+        Dx = np.linalg.det(
+            np.hstack(
+                (np.column_stack((q, ABC[:, 1])), ones)
+            )
+        )
+        Dy = - np.linalg.det(
+            np.hstack(
+                (np.column_stack((q, ABC[:, 0])), ones)
+            )
+        )
+        center = np.array([Dx, Dy]) / np.linalg.det(np.hstack((ABC, ones))) / 2
+        return Circle(center, distance_(center, A))
     
     def malfatti_circles(self):
         if self.flatness == 1:

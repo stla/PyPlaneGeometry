@@ -9,6 +9,7 @@ print("flatness", t.flatness)
 t.show()
 print(t.equal_detour_point())
 print(t.incircle())
+print(t.circumcircle())
 
 print("******************************")
 ell1 = g.Ellipse((1,1), 5, 1, 30)
