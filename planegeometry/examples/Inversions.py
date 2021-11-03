@@ -48,7 +48,7 @@ while k < n1:
         for i in range(n0):
             if i != j:
                 circ = gen0[i][0]
-                iota = geom.Inversion(circ.center, circ.radius)
+                iota = geom.Inversion(circ.center, circ.radius**2)
                 gen1[k] = (iota.invert_circle(gen0[j][0]), 1, i)
                 k += 1
 
@@ -61,7 +61,7 @@ while k < n2:
         for i in range(n0):
             if gen1[j][2] != i:
                 circ = gen0[i][0]
-                iota = geom.Inversion(circ.center, circ.radius)
+                iota = geom.Inversion(circ.center, circ.radius**2)
                 G = gen1[j][0]
                 if isinstance(G, geom.Circle):
                     gen2[k] = (iota.invert_circle(G), 2, i)
@@ -78,7 +78,7 @@ while k < n3:
         for i in range(n0):
             if gen2[j][2] != i:
                 circ = gen0[i][0]
-                iota = geom.Inversion(circ.center, circ.radius)
+                iota = geom.Inversion(circ.center, circ.radius**2)
                 G = gen2[j][0]
                 if isinstance(G, geom.Circle):
                     gen3[k] = (iota.invert_circle(G), 3, i)

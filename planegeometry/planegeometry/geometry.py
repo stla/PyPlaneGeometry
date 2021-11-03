@@ -91,8 +91,8 @@ class Line:
         """
         do1 = self.direction_offset()
         do2 = line2.direction_offset()
-        do1 = (do1["direction"] % pi, do1["offset"])
-        do2 = (do2["direction"] % pi, do2["offset"])
+        do1 = (do1["direction"], do1["offset"])
+        do2 = (do2["direction"], do2["offset"])
         return np.allclose(do1, do2)
     
     def is_parallel(self, line2):
@@ -798,7 +798,7 @@ class Triangle:
         """
         AB = self.B - self.A
         AC = self.C - self.A
-        z = complex(*AB) * complex(*AC)
+        z = complex(*AB).conjugate() * complex(*AC)
         re = z.real
         im = z.imag
         re2 = re * re
