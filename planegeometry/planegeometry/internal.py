@@ -32,6 +32,13 @@ def error_if_not_positive_(**kwargs):
         raise ValueError("`%s` is not positive." % key)
     return
 
+def error_if_not_boolean_(**kwargs):
+    key = list(kwargs.keys())[0]
+    x = kwargs[key]
+    if not isinstance(x, bool):
+        raise ValueError("`%s` must be `True` or `False`." % key)
+    return
+
 def farey_(n):
     return [Fr(0, 1)] + sorted(
         {Fr(m, k) for k in range(1, n+1) for m in range(1, k+1)}

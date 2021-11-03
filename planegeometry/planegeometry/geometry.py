@@ -18,7 +18,8 @@ from .internal import (
     farey_stack_,
     error_if_not_point_,
     error_if_not_number_,
-    error_if_not_positive_
+    error_if_not_positive_,
+    error_if_not_boolean_
 )
 
 def is_inf(x):
@@ -323,7 +324,7 @@ class Circle:
         """Orthogonal circle passing through two points within the reference circle.
         
         :param P1,P2: two distinct points in the interior of the reference circle
-        :param arc: Boolean,  whether to return the arc joining the two points instead of the circle
+        :param arc: Boolean, whether to return the arc joining the two points instead of the circle
         :returns: A `Circle` object or an `Arc` object, or a `Line` object if the two points are on a diameter.
 
         """
@@ -360,12 +361,16 @@ class Circle:
         return Circle(O, distance_(O, P1))
     
     def orthogonalThroughTwoPointsOnCircle(self, alpha1, alpha2, arc = False):
-        """
+        """Orthogonal circle passing through two points on the reference circle.
         
-        
+        :param alpha1,alpha2: two angles defining two points on the reference circle
+        :param arc: Boolean, whether to return only the arc at the interior of the reference circle
+        :returns: A `Circle` object if `arc=False`, an `Arc` object if `arc=True, or a `Line` object: the diameter of the reference circle defined by the two points in case when the two angles differ by `pi`.
+
         """
         _ = error_if_not_number_(alpha1=alpha1)
         _ = error_if_not_number_(alpha2=alpha2)
+        _ = error_if_not_boolean_(arc=arc)
         I = self.center
         r = self.radius
         dalpha = alpha1 - alpha2
@@ -474,6 +479,7 @@ class Arc:
         _ = error_if_not_positive_(radius=radius)
         _ = error_if_not_number_(alpha1=alpha1)
         _ = error_if_not_number_(alpha2=alpha2)
+        _ = error_if_not_boolean(degrees=degrees)
         self.center = np.asarray(center, dtype=float)
         self.radius = radius
         self.alpha1 = alpha1
@@ -499,6 +505,9 @@ class Arc:
         :returns: A matrix with two columns and `n_points` rows.
         
         """
+        if not isinstance(n_points, int):
+            raise ValueError("`n_points` must be an integer.")
+        _ = error_if_not_positive_(n_points=n_points)
         center = self.center
         radius = self.radius
         alpha1 = self.alpha1
@@ -529,6 +538,12 @@ class Ellipse:
     """
     def __init__(self, center, rmajor, rminor, alpha, degrees = True):
         _ = error_if_not_point_(center=center)
+        _ = error_if_not_number_(rmajor=rmajor)
+        _ = error_if_not_positive_(rmajor=rmajor)
+        _ = error_if_not_number_(rminor=rminor)
+        _ = error_if_not_positive_(rminor=rminor)
+        _ = error_if_not_number_(alpha=alpha)
+        _ = error_if_not_boolean(degrees=degrees)
         self.center = np.asarray(center, dtype=float)
         self.rmajor = rmajor
         self.rminor = rminor
@@ -554,6 +569,9 @@ class Ellipse:
         :returns: A matrix with two columns and `n_points` rows.
         
         """
+        if not isinstance(n_points, int):
+            raise ValueError("`n_points` must be an integer.")
+        _ = error_if_not_positive_(n_points=n_points)
         center = self.center
         alpha = self.alpha
         if self.degrees:
@@ -608,6 +626,8 @@ class Inversion:
     
     """
     def __init__(self, pole, power):
+        _ = error_if_not_point_(pole=pole)
+        _ = error_if_not_number_(power=power)
         self.pole = np.asarray(pole, dtype=float)
         self.power = power
         
@@ -632,6 +652,8 @@ class Inversion:
         return pole + k/dot_(pole_M) * pole_M
     
     def invert_circle(self, circ):
+        if not isinstance(circ, Circle):
+            raise ValueError("`circ` must be a `Circle` object.")
         c0 = self.pole
         k = self.power
         c1 = circ.center
@@ -646,6 +668,8 @@ class Inversion:
         return Line(self.invert(R180), self.invert(R90))
 
     def invert_line(self, line):
+        if not isinstance(line, Line):
+            raise ValueError("`line` must be a `Line` object.")
         c0 = self.pole
         A = line.A
         B = line.B
@@ -664,6 +688,11 @@ class Inversion:
         :returns: An `Inversion` object, which maps `circ1` to `circ2` and `circ2` to `circ1`, except in the case when `circ1` and `circ2` are congruent and tangent: in this case a `Reflection` object is returned (a reflection is an inversion on a line).
         
         """
+        if not isinstance(circ1, Circle):
+            raise ValueError("`circ1` must be a `Circle` object.")
+        if not isinstance(circ2, Circle):
+            raise ValueError("`circ2` must be a `Circle` object.")
+        _ = error_if_not_boolean(positive=positive)
         c1 = circ1.center
         r1 = circ1.radius
         c2 = circ2.center
@@ -717,6 +746,12 @@ class Inversion:
         :returns: an `Inversion` object representing an inversion which leaves each of the three circles invariant.
         
         """
+        if not isinstance(circ1, Circle):
+            raise ValueError("`circ1` must be a `Circle` object.")
+        if not isinstance(circ2, Circle):
+            raise ValueError("`circ2` must be a `Circle` object.")
+        if not isinstance(circ3, Circle):
+            raise ValueError("`circ3` must be a `Circle` object.")
         Rc = radical_center(circ1, circ2, circ3)
         return Inversion(Rc, circ1.power(Rc))
 
@@ -738,6 +773,13 @@ def SteinerChain_phi0_(c0, n, shift):
     return circles0
 
 def SteinerChain(c0, n, phi, shift):
+    if not isinstance(c0, Circle):
+        raise ValueError("`c0` must be a `Circle` object.")
+    if not isinstance(n, int):
+        raise ValueError("`n` must be an integer.")
+    _ = error_if_not_positive_(n=n)
+    _ = error_if_not_number(phi=phi)
+    _ = error_if_not_number(shift=shift)
     circles = SteinerChain_phi0_(c0 = c0, n = n, shift = shift)
     R = c0.radius
     O = c0.center
@@ -830,7 +872,7 @@ class Triangle:
         """Edge lengths of the triangle.
         
         """
-        return {"a": self.a(), "b": self.b(), "c": self.c()}
+        return {"a": self.a, "b": self.b, "c": self.c}
 
     @property    
     def orientation(self):
@@ -862,7 +904,7 @@ class Triangle:
         """Check whether the triangle is acute.
         
         """
-        edges = [self.a(), self.b(), self.c()]
+        edges = [self.a, self.b, self.c]
         edges.sort()
         edge0, edge1, edge2 = edges
         return edge0*edge0 + edge1*edge1 >= edge2*edge2
@@ -950,7 +992,13 @@ class Triangle:
         return Circle(center, distance_(center, A))
     
     def malfatti_circles(self):
+        """The Malfatti circles of the triangle.
+        
+        :returns: Three circles and three tangency points.
+        
+        """
         if self.flatness == 1:
+            print("The triangle is flat.")
             return None
         A = self.A
         B = self.B
