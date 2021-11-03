@@ -3,26 +3,14 @@ import numpy as np
 from fractions import Fraction as Fr
 import numbers
 
-def is_point_(P):
-    return (isinstance(P, tuple) or isinstance(P, list) or isinstance(P, np.ndarray)) and len(P) == 2
-
-def error_if_not_point_(**kwargs):
-    key = list(kwargs.keys())[0]
-    P = kwargs[key]
-    if not is_point_(P):
-        # frame = currentframe()
-        # P = getargvalues(frame)#.locals["P"]
-        raise ValueError("`%s` is not a point." % key)
-    return
-
 def is_number_(x):
-    return isinstance(x, numbers.Number)
+    return isinstance(x, numbers.Number) and (not isinstance(x, complex))
 
 def error_if_not_number_(**kwargs):
     key = list(kwargs.keys())[0]
     x = kwargs[key]
     if not is_number_(x):
-        raise ValueError("`%s` is not a number." % key)
+        raise ValueError("`%s` is not a real number." % key)
     return
 
 def error_if_not_positive_(**kwargs):
@@ -38,6 +26,19 @@ def error_if_not_boolean_(**kwargs):
     if not isinstance(x, bool):
         raise ValueError("`%s` must be `True` or `False`." % key)
     return
+
+def is_point_(P):
+    return (isinstance(P, tuple) or isinstance(P, list) or isinstance(P, np.ndarray)) and len(P) == 2 and is_number_(P[0]) and is_number_(P[1])
+
+def error_if_not_point_(**kwargs):
+    key = list(kwargs.keys())[0]
+    P = kwargs[key]
+    if not is_point_(P):
+        # frame = currentframe()
+        # P = getargvalues(frame)#.locals["P"]
+        raise ValueError("`%s` is not a point." % key)
+    return
+
 
 def farey_(n):
     return [Fr(0, 1)] + sorted(

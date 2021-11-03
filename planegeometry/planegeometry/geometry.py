@@ -1091,6 +1091,8 @@ class Affine:
     def __init__(self, A, b):
         _ = error_if_not_point_(b=b)
         self.A = np.asarray(A, dtype=float)
+        if A.ndim != 2 or A.shape != (2,2):
+            raise ValueError("`A` cannot be converted to a 2x2 matrix.")
         self.b = np.asarray(b, dtype=float)
         
     def __str__(self):
@@ -1114,7 +1116,7 @@ class Affine:
         """
         if np.linalg.det(self.A) == 0:
             print("The affine map is singular.")
-            return
+            return None
         M = np.linalg.inv(self.get3x3matrix())
         return Affine(M[0:2, 0:2], M[0:2, -1])
     
