@@ -23,6 +23,11 @@ def is_inf(x):
     return isinstance(x, float) and isinf(x)
 
 class Line:
+    """A class for lines. A line is initialized by two points it passes through, 
+    and for each of these points a Boolean value to indicate whether the line 
+    should be extended besides this point.
+    
+    """
     def __init__(self, A, B, extendA=True, extendB=True):
         _ = error_if_not_point_(A=A)
         _ = error_if_not_point_(B=B)
@@ -52,6 +57,9 @@ class Line:
             print("Segment joining A and B.\n")
         
     def direction_offset(self):
+        """Direction and offset of the line.
+        
+        """
         A = self.A
         B = self.B
         if A[0]==B[0]:
@@ -76,6 +84,9 @@ class Line:
         }
     
     def is_equal(self, line2):
+        """Check whether the reference line is equal to another line.
+        
+        """
         do1 = self.direction_offset()
         do2 = line2.direction_offset()
         do1 = (do1["direction"] % pi, do1["offset"])
@@ -83,6 +94,9 @@ class Line:
         return np.allclose(do1, do2)
     
     def is_parallel(self, line2):
+        """Check whether the reference line is parallel to another line.
+        
+        """
         P1 = self.A
         P2 = self.B
         Q1 = line2.A
@@ -150,6 +164,84 @@ class Line:
             return Line(M, M + v, True, True)
         H = line_line_intersection_(A, B, M - v, M + v)
         return Line(H, M, extendH, extendM)
+
+    def projection(self, M):
+        """Orthogonal projection of a point to the reference line.
+        
+        :param M: a point
+        :returns: A point on the reference line.
+        
+        """
+        _ = error_if_not_point_(M=M)
+        A = self.A
+        B = self.B
+        x, y = B - A
+        v = np.array([-y, x])
+        return line_line_intersection_(A, B, M, M+v)
+
+    def distance(self, M):
+        """Distance from a point to the reference line.
+        
+        :param M: a point
+        :returns: A number.
+        
+        """
+        P = self.projection(M)
+        return distance_(M, P)
+    
+    def reflection(self, M):
+        """Reflection of a point with respect to the reference line.
+        
+        :param M: a point
+        :returns: A point.
+        
+        """
+        R = Reflection(self)
+        return R.reflect(M)
+    
+    def rotate(self, alpha, O, degrees=True):
+        """Rotate the reference line.
+        
+        :param alpha: angle of rotation
+        :param O: center of rotation
+        :param degrees: Boolean, whether `alpha` is given in degrees
+        :returns: A `Line` object.
+        
+        """
+        _ = error_if_not_point(O=O)
+        O = np.asarray(O, dtype=float)
+        if degrees:
+            alpha *= pi/180
+        cosalpha, sinalpha = unit_vector_(alpha)
+        x, y = self.A - O
+        RAt <- np.array([
+            cosalpha*x - sinalpha*y, sinalpha*x + cosalpha*y
+        ])
+        x, y = self.B - O
+        RBt <- np.array([
+            cosalpha*x - sinalpha*y, sinalpha*x + cosalpha*y
+        ])
+        return Line(RAt + O, RBt + O, self.extendA, self.extendB)
+
+    def translate(self, v):
+        """Translate the reference line.
+        
+        :param v: the vector of translation
+        :returns: A `Line` object.
+        
+        """
+        _ = error_if_not_point(v=v)
+        v = np.asarray(v, dtype=float)
+        return Line(self.A + v, self.B + v, self.extendA, self.extendB)
+        
+    def invert(self, iota):
+        """Invert the reference line.
+        
+        :param iota: an `Inversion` object
+        :returns: A `Line` object or a `Circle` object.
+        
+        """
+        return iota.invert_line(self)
 
 
 
