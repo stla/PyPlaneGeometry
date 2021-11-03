@@ -15,7 +15,8 @@ from .internal import (
     det2x2_mat_,
     from_complex_,
     mod2_,
-    farey_stack_
+    farey_stack_,
+    error_if_not_point_
 )
 
 def is_inf(x):
@@ -23,8 +24,12 @@ def is_inf(x):
 
 class Line:
     def __init__(self, A, B, extendA=True, extendB=True):
+        _ = error_if_not_point_(A=A)
+        _ = error_if_not_point_(B=B)
         self.A = np.asarray(A, dtype=float)
         self.B = np.asarray(B, dtype=float)
+        if np.allclose(self.A, self.B):
+            raise ValueError("`A` and `B` must be distinct.")
         self.extendA = extendA
         self.extendB = extendB
         
@@ -98,6 +103,8 @@ class Line:
         :returns: A Boolean value.        
         
         """
+        _ = error_if_not_point_(M=M)
+        M = np.asarray(M, dtype=float)
         A = self.A
         B = self.B
         if checkCollinear:
@@ -133,6 +140,7 @@ class Line:
         :returns: A `Line` object; its two points are the meeting point and the point `M`.
         
         """
+        _ = error_if_not_point_(M=M)
         A = self.A
         B = self.B
         A_B = B - A
@@ -162,6 +170,7 @@ def intersection_line_line(line1, line2, strict=False):
 
 class Circle:
     def __init__(self, center, radius):
+        _ = error_if_not_point_(center=center)
         self.center = np.asarray(center, dtype=float)
         self.radius = radius
         
@@ -180,6 +189,7 @@ class Circle:
         :returns: A Boolean value.
         
         """
+        _ = error_if_not_point_(P=P)
         P = np.asarray(P, dtype=float)
         r = self.radius
         O = self.center
@@ -206,18 +216,19 @@ class Circle:
         :returns: A `Circle` object or an `Arc` object, or a `Line` object if the two points are on a diameter.
 
         """
+        _ = error_if_not_point_(P1=P1)
+        _ = error_if_not_point_(P2=P2)
+        P1 = np.asarray(P1, dtype=float)
+        P2 = np.asarray(P2, dtype=float)
         if np.allclose(P1, P2):
-            print("`P1` and `P2` must be distinct.")
-            return
+            raise ValueError("`P1` and `P2` must be distinct.")
         I = self.center
         r = self.radius
         r2 = r * r
         if distance_(P1, I) >= r2:
-            print("`P1` is not in the interior of the reference circle.")
-            return
+            raise ValueError("`P1` is not in the interior of the reference circle.")
         if distance_(P2,I) >= r2:
-            print("`P2` is not in the interior of the reference circle.")
-            return
+            raise ValueError("`P2` is not in the interior of the reference circle.")
         if collinear_(I, P1, P2):
             return Line(P1, P2, not arc, not arc)
         iota = Inversion(I, r2)
@@ -272,6 +283,7 @@ class Circle:
         :returns: A number, the power of `M` with respect to the circle.
         
         """
+        _ = error_if_not_point_(M=M)
         M = np.asarray(M, dtype=float)
         radius = self.radius
         return dot_(M - self.center) - radius*radius
@@ -334,6 +346,7 @@ class Arc:
     
     """
     def __init__(self, center, radius, alpha1, alpha2, degrees = True):
+        _ = error_if_not_point_(center=center)
         self.center = np.asarray(center, dtype=float)
         self.radius = radius
         self.alpha1 = alpha1
@@ -388,6 +401,7 @@ class Ellipse:
     
     """
     def __init__(self, center, rmajor, rminor, alpha, degrees = True):
+        _ = error_if_not_point_(center=center)
         self.center = np.asarray(center, dtype=float)
         self.rmajor = rmajor
         self.rminor = rminor
@@ -480,8 +494,9 @@ class Inversion:
     
     def invert(self, M):
         pole = self.pole
-        if np.isscalar(M) and isinf(M):
+        if is_inf(M):
             return pole
+        _ = error_if_not_point_(M=M)
         M = np.asarray(M)
         if np.allclose(pole, M):
             return inf
@@ -618,6 +633,9 @@ class Triangle:
     
     """
     def __init__(self, A, B, C):
+        _ = error_if_not_point_(A=A)
+        _ = error_if_not_point_(B=B)
+        _ = error_if_not_point_(C=C)
         self.A = np.asarray(A, dtype=float)
         self.B = np.asarray(B, dtype=float)
         self.C = np.asarray(C, dtype=float)
@@ -638,7 +656,9 @@ class Triangle:
     
     @property
     def flatness(self):
-        "Flatness, a number between 0 and 1; a triangle is flat when its flatness is 1."
+        """Flatness, a number between 0 and 1; a triangle is flat when its flatness is 1.
+        
+        """
         AB = self.B - self.A
         AC = self.C - self.A
         z = complex(*AB) * complex(*AC)
@@ -649,27 +669,37 @@ class Triangle:
 
     @property
     def a(self):
-        "Length of the side BC."
+        """Length of the side BC.
+        
+        """
         return distance_(self.B, self.C)
 
     @property
     def b(self):
-        "Length of the side AC."
+        """Length of the side AC.
+        
+        """
         return distance_(self.A, self.C)
 
     @property
     def c(self):
-        "Length of the side AB."
+        """Length of the side AB.
+        
+        """
         return distance_(self.A, self.B)
 
     @property    
     def edges(self):
-        "Edge lengths of the triangle."
+        """Edge lengths of the triangle.
+        
+        """
         return {"a": self.a(), "b": self.b(), "c": self.c()}
 
     @property    
     def orientation(self):
-        "Orientation of the triangle; 1 for counterclockwise, -1 for clockwise, 0 for collinear."
+        """Orientation of the triangle; 1 for counterclockwise, -1 for clockwise, 0 for collinear.
+        
+        """
         A = self.A
         B = self.B
         C = self.C
@@ -677,7 +707,10 @@ class Triangle:
         return 0 if val==0 else (1 if val>0 else -1)
     
     def contains(self, M):
-        "Check whether a point lies inside the reference triangle."
+        """Check whether a point lies inside the reference triangle.
+        
+        """
+        _ = error_if_not_point_(M=M)
         A0, A1 = self.A
         B0, B1 = self.B
         C0, C1 = self.C
@@ -689,7 +722,9 @@ class Triangle:
 
     @property    
     def is_acute(self):
-        "Check whether the triangle is acute."
+        """Check whether the triangle is acute.
+        
+        """
         edges = [self.a(), self.b(), self.c()]
         edges.sort()
         edge0, edge1, edge2 = edges
@@ -697,7 +732,9 @@ class Triangle:
 
     @property    
     def angleA(self):
-        "The angle at the vertex A in radians."
+        """The angle at the vertex A in radians.
+        
+        """
         A = self.A
         B = self.B
         C = self.C
@@ -709,7 +746,9 @@ class Triangle:
 
     @property        
     def angleB(self):
-        "The angle at the vertex B in radians."
+        """The angle at the vertex B in radians.
+        
+        """
         A = self.A
         B = self.B
         C = self.C
@@ -721,7 +760,9 @@ class Triangle:
 
     @property        
     def angleC(self):
-        "The angle at the vertex C in radians."
+        """The angle at the vertex C in radians.
+        
+        """
         A = self.A
         B = self.B
         C = self.C
@@ -732,7 +773,9 @@ class Triangle:
         return acos(dot_(CA, CB) / a / b)
     
     def incircle(self):
-        "The incircle of the triangle."
+        """The incircle of the triangle.
+        
+        """
         A = self.A
         B = self.B
         C = self.C
@@ -811,7 +854,9 @@ class Triangle:
         }
     
     def equal_detour_point(self):
-        "Equal detour point of the triangle, also known as the X(176) triangle center."
+        """Equal detour point of the triangle, also known as the X(176) triangle center.
+        
+        """
         A = self.A
         B = self.B
         C = self.C
@@ -836,6 +881,7 @@ class Affine:
     
     """
     def __init__(self, A, b):
+        _ = error_if_not_point_(b=b)
         self.A = np.asarray(A, dtype=float)
         self.b = np.asarray(b, dtype=float)
         
@@ -948,6 +994,12 @@ class Affine:
         :returns: An `Affine` object representing the transformation which maps Pi to Qi for each i=1,2,3.
         
         """
+        _ = error_if_not_point_(P1=P1)
+        _ = error_if_not_point_(P2=P2)
+        _ = error_if_not_point_(P3=P3)
+        _ = error_if_not_point_(Q1=Q1)
+        _ = error_if_not_point_(Q2=Q2)
+        _ = error_if_not_point_(Q3=Q3)
         P1 = np.asarray(P1, dtype=float)
         P2 = np.asarray(P2, dtype=float)
         P3 = np.asarray(P3, dtype=float)
@@ -1126,6 +1178,7 @@ class Mobius:
         d = self.d
         if is_inf(P):
             return inf if c == 0 else from_complex_(a / c)
+        _ = error_if_not_point_(P=P)
         P = np.asarray(P)
         z = complex(*P)
         condition = c != 0 and z == -d/c
@@ -1209,16 +1262,28 @@ class Mobius:
         """
         if is_inf(P1):
             P1 = [inf]
+        else:
+            _ = error_if_not_point_(P1=P1)
         if is_inf(P2):
             P2 = [inf]
+        else:
+            _ = error_if_not_point_(P2=P2)
         if is_inf(P3):
             P3 = [inf]
+        else:
+            _ = error_if_not_point_(P3=P3)
         if is_inf(Q1):
             Q1 = [inf]
+        else:
+            _ = error_if_not_point_(Q1=Q1)
         if is_inf(Q2):
             Q2 = [inf]
+        else:
+            _ = error_if_not_point_(Q2=Q2)
         if is_inf(Q3):
             Q3 = [inf]
+        else:
+            _ = error_if_not_point_(Q3=Q3)
         z1 = complex(*np.asarray(P1))
         z2 = complex(*np.asarray(P2))
         z3 = complex(*np.asarray(P3))
@@ -1337,6 +1402,7 @@ class Reflection:
         """
         if is_inf(P):
             return inf
+        _ = error_if_not_point_(P=P)
         P = np.asarray(P, dtype=float)
         line = self.line
         if line.includes(P):
@@ -1413,6 +1479,7 @@ class Projection:
         :returns: a point on `D`, the projection of `M`
         
         """
+        _ = error_if_not_point_(M=M)
         M = np.asarray(M)
         D = self.D
         if D.includes(M):
@@ -1428,6 +1495,7 @@ class Projection:
         """An alias of `project`
         
         """
+        return self.project(M)
 
     def get3x3matrix(self):
         """Augmented matrix of the projection.
