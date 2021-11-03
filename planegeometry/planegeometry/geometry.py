@@ -1364,5 +1364,91 @@ class Reflection:
             self.transform(line.A), self.transform(line.B),
             line.extendA, line.extendB
         )
+    
+    def as_affine(self):
+        """Convert the reflection to an `Affine` object.
+        
+        """
+        M = self.get3x3matrix()
+        return Affine(M[0:2, 0:2], M[0:2, 2])
 
+
+class Projection:
+    """A class for projections. A projection on a line is given by the line of 
+    projection `D` and the directrix line `Delta`. 
+    
+    For an orthogonal projection, you can also use the `projection` method of 
+    the `Line` class.
+    
+    """
+    def __init__(self, D, Delta):
+        if not isinstance(D, Line):
+            raise ValueError("`D` must be a `Line` object to initialize the projection.")
+        if not Delta is None and not isinstance(Delta, Line):
+            raise ValueError("The directrix `Delta` must be a `Line` object or `None` (for an orthogonal projection).")
+        self.D = Line(D.A, D.B, True, True)
+        if Delta is None:
+            v = D.B - D.A
+            self.Delta = Line((0,0), (-v[1], v[0]), True, True)
+        else:
+            self.Delta = Line(Delta.A, Delta.B, True, True)
+        self.orthogonal = Delta is None
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    def show(self):
+        print("Projection onto the line `D` passing through `A` and `B` parallel to the line `Delta` passing through `P` and `Q`.\n")
+        print("                 A: ", self.D.A, "\n")
+        print("                 B: ", self.D.B, "\n")
+        print("                 P: ", self.Delta.P, "\n")
+        print("                 Q: ", self.Delta.Q, "\n")
+        if self.orthogonal:
+            print("This is an orthogonal projection.\n")
+
+    def project(self, M):
+        """Projection of a point.
+        
+        :param M: a point
+        :returns: a point on `D`, the projection of `M`
+        
+        """
+        M = np.asarray(M)
+        D = self.D
+        if D.includes(M):
+            return M
+        Delta = self.Delta
+        u = Delta.B - Delta.A
+        do = D.direction_offset()
+        ab = unit_vector_(do["direction"])
+        k = - (dot_(ab, M) - do["offset"]) / dot_(ab, u)
+        return k*u + M
+
+    def transform(self, M):
+        """An alias of `project`
+        
+        """
+
+    def get3x3matrix(self):
+        """Augmented matrix of the projection.
+        
+        :returns: A 3x3 matrix.
+        
+        """
+        b = self.project((0, 0))
+        col1 = self.project((1, 0)) - b
+        col2 = self.project((0, 1)) - b
+        return np.hstack(
+          (
+            np.vstack((np.column_stack((col1, col2)), np.array([[0.0, 0.0]]))),
+            np.array([[b[0]], [b[1]], [1.0]])
+          )
+        )
+
+    def as_affine(self):
+        """Convert the projection to an `Affine` object.
+        
+        """
+        M = self.get3x3matrix()
+        return Affine(M[0:2, 0:2], M[0:2, 2])
 
