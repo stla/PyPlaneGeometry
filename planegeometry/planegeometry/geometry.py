@@ -261,8 +261,13 @@ def intersection_line_line(line1, line2, strict=False):
 
 
 class Circle:
+    """A class for circles. A circle is given by its center and its radius.
+    
+    """
     def __init__(self, center, radius):
         _ = error_if_not_point_(center=center)
+        _ = error_if_not_number_(radius=radius)
+        _ = error_if_not_positive_(radius=radius)
         self.center = np.asarray(center, dtype=float)
         self.radius = radius
         
@@ -273,6 +278,17 @@ class Circle:
         print("Circle:\n")
         print(" center: ", tuple(self.center), "\n")
         print(" radius: ", self.radius, "\n")
+        
+    def is_equal(self, circ2):
+        """Check whether the reference circle is equal to another circle.
+        
+        :param circ2: a `Circle` object
+        :returns: A Boolean value.
+        
+        """
+        if not isinstance(circ2, Circle):
+            raise ValueError("`circ2` is not a `Circle` object.")
+        return isclose(self.radius, circ2.radius) and np.allclose(self.center, circ2.center)
         
     def includes(self, P):
         """Check whether a point belongs to the reference circle.
@@ -296,6 +312,7 @@ class Circle:
         :returns: The point on the circle with polar angle `alpha`.
         
         """
+        _ = error_if_not_number_(alpha=alpha)
         if degrees:
             alpha *= pi/180
         return self.center + self.radius * unit_vector_(alpha)
@@ -345,6 +362,8 @@ class Circle:
         
         
         """
+        _ = error_if_not_number_(alpha1=alpha1)
+        _ = error_if_not_number_(alpha2=alpha2)
         I = self.center
         r = self.radius
         dalpha = alpha1 - alpha2
@@ -387,6 +406,8 @@ class Circle:
         :returns: the radical center of the reference circle and `circ2`.
         
         """
+        if not isinstance(circ2, Circle):
+            raise ValueError("`circ2` is not a `Circle` object.")
         C1 = self.center
         C2 = circ2.center
         r1 = self.radius
@@ -405,6 +426,8 @@ class Circle:
         :returns: A `Line` object, the radical axis of the reference circle and `circ2`.
         
         """
+        if not isinstance(circ2, Circle):
+            raise ValueError("`circ2` is not a `Circle` object.")
         C1 = self.center
         C2 = circ2.center
         if np.allclose(C1, C2):
@@ -423,6 +446,12 @@ def radical_center(circ1, circ2, circ3):
     :returns: A point, the radical center of the three circles.
     
     """
+    if not isinstance(circ1, Circle):
+        raise ValueError("`circ1` is not a `Circle` object.")
+    if not isinstance(circ2, Circle):
+        raise ValueError("`circ2` is not a `Circle` object.")
+    if not isinstance(circ3, Circle):
+        raise ValueError("`circ3` is not a `Circle` object.")
     l1 = circ1.radical_axis(circ2)
     l2 = circ1.radical_axis(circ3)
     return line_line_intersection_(l1.A, l1.B, l2.A, l2.B)
@@ -439,6 +468,10 @@ class Arc:
     """
     def __init__(self, center, radius, alpha1, alpha2, degrees = True):
         _ = error_if_not_point_(center=center)
+        _ = error_if_not_number_(radius=radius)
+        _ = error_if_not_positive_(radius=radius)
+        _ = error_if_not_number_(alpha1=alpha1)
+        _ = error_if_not_number_(alpha2=alpha2)
         self.center = np.asarray(center, dtype=float)
         self.radius = radius
         self.alpha1 = alpha1
@@ -1501,6 +1534,12 @@ class Reflection:
             return P
         perp = line.perpendicular(P, False, False)
         return P + 2 * (perp.A - perp.B)
+    
+    def reflect(self, P):
+        """An alias of `transform`.
+        
+        """
+        return self.transform(P)
         
     def transform_circle(self, circ):
         """Reflect a circle.

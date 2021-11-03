@@ -1,6 +1,7 @@
 from math import cos, sin
 import numpy as np
 from fractions import Fraction as Fr
+import numbers
 
 def is_point_(P):
     return (isinstance(P, tuple) or isinstance(P, list) or isinstance(P, np.ndarray)) and len(P) == 2
@@ -12,6 +13,23 @@ def error_if_not_point_(**kwargs):
         # frame = currentframe()
         # P = getargvalues(frame)#.locals["P"]
         raise ValueError("`%s` is not a point." % key)
+    return
+
+def is_number_(x):
+    return isinstance(x, numbers.Number)
+
+def error_if_not_number_(**kwargs):
+    key = list(kwargs.keys())[0]
+    x = kwargs[key]
+    if not is_number_(x):
+        raise ValueError("`%s` is not a number." % key)
+    return
+
+def error_if_not_positive_(**kwargs):
+    key = list(kwargs.keys())[0]
+    x = kwargs[key]
+    if x <= 0:
+        raise ValueError("`%s` is not positive." % key)
     return
 
 def farey_(n):
