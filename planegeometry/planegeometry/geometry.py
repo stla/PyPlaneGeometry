@@ -7,8 +7,9 @@ from .internal import (
     dot_,
     det2x2_,
     line_line_intersection_,
+    circle_line_intersection_, 
     unit_vector_,
-    epsilon_,
+    sepsilon_,
     ellipse_points_,
     collinear_,
     circle_points_,
@@ -109,7 +110,7 @@ class Line:
         dy1 = P1[1] - P2[1]
         dy2 = Q1[1] - Q2[1]
         D = det2x2_((dx1, dy1), (dx2, dy2))
-        return abs(D) < sqrt(epsilon_)
+        return abs(D) < sepsilon_
     
     def includes(self, M, strict = False, checkCollinear = True):
         """Check whether a point belongs to the line.
@@ -470,7 +471,54 @@ def radical_center(circ1, circ2, circ3):
     l1 = circ1.radical_axis(circ2)
     l2 = circ1.radical_axis(circ3)
     return line_line_intersection_(l1.A, l1.B, l2.A, l2.B)
-    
+   
+
+def intersection_circle_line(circ, line):
+    """Intersection(s) of a circle and a line.
+
+    """
+    if not isinstance(circ, Circle):
+        raise ValueError("`circ` is not a `Circle` object.")
+    if not isinstance(line, Line):
+        raise ValueError("`line` is not a `Line` object.")
+    C = circ.center
+    intersections = circle_line_intersection_(line.A - C, line.B - C, circ.radius)
+    if intersections is None:
+        return None
+    if isinstance(intersections, list):
+        I1, I2 = intersections
+        return [I1 + C, I2 + C]
+    return intersections + C
+        
+
+def intersection_ellipse_line(ell, line):
+    """Intersection(s) of an ellipse and a line.
+
+    """
+    if not isinstance(ell, Ellipse) and not isinstance(ell, Circle):
+        raise ValueError("`ell` is not an `Ellipse` object neither a `Circle` object.")
+    if not isinstance(line, Line):
+        raise ValueError("`line` is not a `Line` object.")
+    if isinstance(ell, Circle):
+        return intersection_circle_line(ell, line)
+    a = ell.rmajor
+    b = ell.rminor
+    theta = ell.alpha
+    if ell.degrees:
+        theta *= pi/180
+    v = unit_vector_(theta)
+    w = np.array([-v[1], v[0]])
+    # f maps the unit circle to ell:
+    f = Affine(np.column_stack((a*v, b*w)), ell.center)
+    invf = f.inverse() # maps ell to the unit circle
+    line2 = invf.transform_line(line)
+    Is = intersection_circle_line(Circle((0, 0), 1), line2)
+    if Is is None:
+        return None
+    if isinstance(Is, list):
+        I1, I2 = Is
+        return [f.transform(I1), f.transform(I2)]
+    return f.transform(Is)
 
 
 class Arc:
@@ -619,12 +667,46 @@ class Ellipse:
             "D": -2*A*x - B*y,
             "E": -B*x - 2*C*y,
             "F": A*x*x + B*x*y + C*y*y - a2*b2
-        }        
+        }
+    
+    def includes(self, P):
+        """Check whether a point belongs to the ellipse.
+        
+        :param P: a point
+        :returns: A Boolean value.
+        
+        """
+        _ = error_if_not_point_(P=P)
+        A, B, C, D, E, F = self.equation().values()
+        x, y = P
+        zero = A*x*x + B*x*y + C*y*y + D*x + E*y + F
+        return isclose(1.0, zero+1.0)
+    
+    def theta2t(self, theta, degrees=True):
+        """Convert angle to eccentric angle.
+        
+        :param theta: angle between the major axis and the half-line starting
+        at the center of the ellipse and passing through the point of interest
+        on the ellipse
+        :param degrees: Boolean, whether `theta` is given in degrees
+        :returns: The eccentric angle of the point of interest on the ellipse,
+        in radians.
+        
+        """
+        _ = error_if_not_number_(theta=theta)
+        _ = error_if_not_boolean_(degrees=degrees)
+        if degrees:
+            theta *= pi/180
+        theta_mod_2pi = theta % (2*pi)
+        sgn = 1 if theta_mod_2pi < sepsilon_ else -1
+        theta_eps = theta + sgn*sepsilon_
+        return atan2(self.rmajor/self.rminor, 1/tan(theta_mod_2pi)) + theta_eps - theta_eps % pi
 
 
-def circle_as_ellipse_(C):
-    r = C.radius
-    return Ellipse(C.center, r, r, 0)
+
+# def circle_as_ellipse_(C):
+#     r = C.radius
+#     return Ellipse(C.center, r, r, 0)
 
 
 class Inversion:
@@ -667,7 +749,7 @@ class Inversion:
         c1 = circ.center
         r1 = circ.radius
         D1 = (c1[0] - c0[0])**2 + (c1[1] - c0[1])**2 - r1*r1
-        if abs(D1) > sqrt(epsilon_):
+        if abs(D1) > sepsilon_:
             s = k / D1
             return Circle(c0 + s*(c1-c0), abs(s)*r1)
         Ot = c0 - c1
@@ -1196,10 +1278,11 @@ class Affine:
         
         """
         M = self.A
+        b = self.b
         if np.linalg.det(M) == 0:
             print("The affine map is singular.")
             return
-        return Line(M.dot(line.A), M.dot(line.B), line.extendA, line.extendB)
+        return Line(M.dot(line.A) + b, M.dot(line.B) + b, line.extendA, line.extendB)
     
     def transform_ellipse(self, ell):
         """Transform an ellipse by the reference affine transformation (only for an invertible affine map).
@@ -1392,7 +1475,7 @@ class Mobius:
         M = self.M
         detM = det2x2_mat_(M)
         trM = M[0, 0] + M[1, 1]
-        if abs(trM*trM - 4*detM) < sqrt(epsilon_):
+        if abs(trM*trM - 4*detM) < sepsilon_:
             alpha = trM / 2
             D = np.diag((alpha, alpha))
             if np.allclose(M, D):
@@ -1502,7 +1585,7 @@ class Mobius:
         A = -2 * (gamma0 * c * d.conjugate()).real - D0 * mod2_(c)
         gamma = gamma0.conjugate() * b * c.conjugate() + gamma0 * d.conjugate() * a + D0 * c.conjugate() *a
         D = D0 * mod2_(a) + 2 * (gamma0 * b.conjugate() * a).real
-        if abs(A) > sqrt(epsilon_):
+        if abs(A) > sepsilon_:
             return Circle(from_complex_(gamma/A), sqrt(mod2_(gamma)/A/A + D/A))
         return Line(self.transform(line.A), self.transform(line.B))
     

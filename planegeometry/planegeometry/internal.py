@@ -1,4 +1,4 @@
-from math import cos, sin
+from math import cos, sin, sqrt
 import numpy as np
 from fractions import Fraction as Fr
 import numbers
@@ -52,6 +52,8 @@ def farey_stack_(n):
 
 epsilon_ = np.finfo(float).eps
 
+sepsilon_ = sqrt(epsilon_)
+
 def distance_(A, B):
     return np.linalg.norm(B-A)
 
@@ -83,6 +85,32 @@ def line_line_intersection_(P1, P2, Q1, Q2):
       det2x2_((D1, dx1), (D2, dx2)),
       det2x2_((D1, dy1), (D2, dy2))
     ]) / D
+
+def circle_line_intersection_(A1, A2, r):
+    x1, y1 = A1
+    x2, y2 = A2
+    dx = x2 - x1
+    dy = y2 - y1
+    dr2 = dx*dx + dy*dy
+    D = det2x2_(A1, A2)
+    Delta = r*r*dr2 - D*D
+    if Delta < 0:
+        return None
+    if Delta < sepsilon_:
+        return D/dr2 * np.array([dy, -dx])
+    sgn = -1 if dy < 0 else 1
+    Ddy = D*dy
+    sqrtDelta = sqrt(Delta)
+    I1 = np.array([
+        Ddy + sgn*dx * sqrtDelta,
+        -D*dx + abs(dy)*sqrtDelta
+    ]) / dr2
+    I2 = np.array([
+      Ddy - sgn*dx * sqrtDelta,
+      -D*dx - abs(dy)*sqrtDelta
+    ]) / dr2
+    return [I1, I2]
+
 
 def unit_vector_(beta):
     return np.array([cos(beta), sin(beta)])

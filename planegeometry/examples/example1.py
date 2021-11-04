@@ -36,6 +36,31 @@ plt.xlim(-1, 3)
 plt.ylim(-1, 3)
 plt.show()
 
+print("--------------------------------")
+circ = g.Circle((1,1), 5)
+line = g.Line((2,-2), (0,4))
+Is = g.intersection_circle_line(circ, line)
+print(circ.includes(Is[0]) and circ.includes(Is[1]))
+
+print("--------------------------------")
+ell = g.Ellipse((1,1), 5, 1, 30)
+line = g.Line((2,-2), (0,4))
+Is = g.intersection_ellipse_line(ell, line)
+print(ell.includes(Is[0]) and ell.includes(Is[1]))
+
+figure, axes = plt.subplots(figsize=(10, 10))
+axes.set_aspect(1)
+#axes.axline(line.A, line.B, linewidth=2, color="red")
+axes.add_artist(
+    plt.Polygon(
+        ell.path(), closed=True, fill=False, 
+        edgecolor="green", linewidth=2
+    )
+)
+plt.plot([Is[0][0], Is[1][0]], [Is[0][1], Is[1][1]])
+plt.xlim(-5, 5)
+plt.ylim(-5, 5)
+plt.show()
 
 print("******************************")
 ell1 = g.Ellipse((1,1), 5, 1, 30)
