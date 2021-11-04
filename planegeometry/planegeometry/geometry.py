@@ -941,6 +941,62 @@ class Ellipse:
         xy = np.array([B*E - 2*C*D, B*D - 2*A*E])
         phi = 0.0 if A == C else (atan(B/(A-C))/2 if abs(C) > abs(A) else pi/2 - atan(-B/(A-C))/2)
         return Ellipse(xy/(4*A*C - B*B), max(a,b), min(a,b), (phi*180/pi) % 180)
+    
+    @classmethod
+    def equation_from_five_points(cls, P1, P2, P3, P4, P5):
+        """The implicit equation of the ellipse is
+        `Ax² + Bxy + Cy² + Dx + Ey + F = 0`. This function returns
+        A, B, C, D, E and F.
+        
+        :param P1,P2,P3,P4,P5: five points
+        :returns: A dictionary giving A, B, C, D, E and F.
+        
+        """
+        _ = error_if_not_point_(P1=P1)
+        _ = error_if_not_point_(P2=P2)
+        _ = error_if_not_point_(P3=P3)
+        _ = error_if_not_point_(P4=P4)
+        _ = error_if_not_point_(P5=P5)
+        P1 = np.asarray(P1, dtype=float)
+        P2 = np.asarray(P2, dtype=float)
+        P3 = np.asarray(P3, dtype=float)
+        P4 = np.asarray(P4, dtype=float)
+        P5 = np.asarray(P5, dtype=float)
+        P = np.array([P1, P2, P3, P4, P5])
+        if np.unique(P, axis=0).shape != P.shape:
+            raise ValueError("The five points are not distinct.")
+        x = P[:, 0]
+        y = P[:, 1]
+        M = np.column_stack((x*x, x*y, y*y, x, y, np.ones(5)))
+        A = np.linalg.det(M[:, [1, 2, 3, 4, 5]])
+        B = -np.linalg.det(M[:, [0, 2, 3, 4, 5]])
+        C = np.linalg.det(M[:, [0, 1, 3, 4, 5]])
+        if B*B-4*A*C >= 0:
+            raise ValueError("The five points do not lie on an ellipse.")
+        D = -np.linalg.det(M[:, [0, 1, 2, 4, 5]])
+        E = np.linalg.det(M[:, [0, 1, 2, 3, 5]])
+        F = -np.linalg.det(M[:, [0, 1, 2, 3, 4]])
+        return {
+            "A": A,
+            "B": B,
+            "C": C,
+            "D": D,
+            "E": E,
+            "F": F
+        }
+    
+    @classmethod
+    def from_five_points(cls, P1, P2, P3, P4, P5):
+        """Ellipse from five points on this ellipse.
+        
+        :param P1,P2,P3,P4,P5: five points
+        :returns: An `Ellipse` object.
+        
+        """
+        coeffs = Ellipse.equation_from_five_points(P1, P2, P3, P4, P5)
+        A, B, C, D, E, F = coeffs.values()
+        return Ellipse.from_equation(A, B, C, D, E, F)
+        
 
 
 
