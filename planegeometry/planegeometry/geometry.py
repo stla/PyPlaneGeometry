@@ -251,19 +251,28 @@ class Line:
         return iota.invert_line(self)
 
     def intersection_with_circle(self, circ):
-        """
+        """Intersection(s) of the line with a circle.
+        
+        :param circ: a `Circle` object
+        :returns: `None`, a point, or a list of two points.
         
         """
         return intersection_circle_line(circ, self)
 
     def intersection_with_ellipse(self, ell):
-        """
+        """Intersection(s) of the line with an ellipse.
+        
+        :param ell: an `Ellipse` object
+        :returns: `None`, a point, or a list of two points.
         
         """
         return intersection_ellipse_line(ell, self)
 
     def intersection_with_line(self, line2, strict=False):
-        """
+        """Intersection(s) of the reference line with another line.
+        
+        :param line2: a `Line` object
+        :returns: `None` (the lines are parallel), a point, or a `Line` object (the two lines are equal).
         
         """
         return intersection_line_line(self, line2, strict=strict)
@@ -1168,6 +1177,59 @@ class Triangle:
         )
         center = np.array([Dx, Dy]) / np.linalg.det(np.hstack((ABC, ones))) / 2
         return Circle(center, distance_(center, A))
+    
+    def excircles(self):
+        """The excircles of the triangle.
+        
+        :returns: A dictionary of three `Circle` objects.
+        
+        """
+        A = self.A
+        B = self.B
+        C = self.C
+        a = distance_(B, C)
+        b = distance_(A, C)
+        c = distance_(B, A)
+        s = (a + b + c) / 2
+        JA = (-a*A + b*B + c*C) / (-a + b + c)
+        JB = (a*A - b*B + c*C) / (a - b + c)
+        JC = (a*A + b*B - c*C) / (a + b - c)
+        rA = sqrt(s*(s-b)*(s-c)/(s-a))
+        rB = sqrt(s*(s-a)*(s-c)/(s-b))
+        rC = sqrt(s*(s-a)*(s-b)/(s-c))
+        return {
+          "A": Circle(center = JA, radius = rA),
+          "B": Circle(center = JB, radius = rB),
+          "C": Circle(center = JC, radius = rC)
+        }
+        
+    def orthic_triangle(self):
+        """Orthic triangle. Its vertices are the feet of the altitudes
+        of the reference triangle.
+        
+        :returns: A `Triangle` object.
+
+        """
+        A = self.A
+        B = self.B
+        C = self.C
+        a = distance_(B, C)
+        b = distance_(A, C)
+        c = distance_(B, A)
+        AC = C-A
+        AB = B-A
+        BC = C-B
+        BA = A-B
+        CA = A-C
+        CB = B-C
+        x = 1 / (dot_(AC,AB) / b / c)
+        y = 1 / (dot_(BC,BA) / a / c)
+        z = 1 / (dot_(CA,CB) / a / b)
+        HA = (b/z*B + c/y*C) / (b/z + c/y)
+        HB = (a/z*A + c/x*C) / (a/z + c/x)
+        HC = (a/y*A + b/x*B) / (a/y + b/x)
+        return Triangle(HA, HB, HC)
+
     
     def malfatti_circles(self):
         """The Malfatti circles of the triangle.
