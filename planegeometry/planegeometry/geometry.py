@@ -1,4 +1,16 @@
-from math import acos, sqrt, tan, atan2, cos, sin, pi, inf, isinf, isclose
+from math import (
+    acos, 
+    sqrt, 
+    tan, 
+    atan2, 
+    cos, 
+    sin, 
+    pi, 
+    inf, 
+    isinf, 
+    isclose,
+    atan
+)
 import numpy as np
 from functools import reduce
 from .internal import (
@@ -654,6 +666,25 @@ class Ellipse:
         print(" minor radius: ", self.rminor, "\n")
         print("        angle: ", self.alpha, unit + s, "\n")
     
+    def is_equal(self, ell2):
+        """Check whether the reference ellipse equals another ellipse.
+        
+        
+        """
+        if isinstance(ell2, Circle):
+            ell2 = ell2.as_ellipse()
+        x1, y1 = self.center
+        alpha1 = self.alpha
+        if not self.degrees:
+            alpha1 *= 180/pi
+        x2, y2 = ell2.center
+        alpha2 = ell2.alpha
+        if not ell2.degrees:
+            alpha2 *= 180/pi
+        v1 = np.array([x1, y1, self.rmajor, self.rminor, alpha1 % 180])
+        v2 = np.array([x2, y2, ell2.rmajor, ell2.rminor, alpha2 % 180])
+        return np.allclose(v1, v2)
+
     def path(self, n_points=100):
         """Path that forms the ellipse.
         
@@ -799,6 +830,31 @@ class Ellipse:
         
         """
         return intersection_ellipse_line(self, line)
+    
+    @classmethod
+    def from_equation(cls, A, B, C, D, E, F):
+        """Ellipse from its implicit equation.
+        
+        :param A,B,C,D,E,F: coefficients of the implicit equation of the ellipse
+        :returns: An `Ellipse` object.
+        
+        """
+        if A*C <= 0 or B*B-4*A*C >= 0 or D*D + E*E <= 4*(A+C)*F:
+            raise ValueError("These parameters do not define an ellipse.")
+        Q = np.array([[2*A, B, D], [B, 2*C, E], [D, E, 2*F]])
+        if np.linalg.det(Q) == 0:
+            raise ValueError("These parameters do not define an ellipse.")
+        M0 = np.array([F, D/2, E/2, D/2, A, B/2, E/2, B/2, C]).reshape((3,3))
+        M = np.array([[A, B/2], [B/2, C]])
+        eigvals = np.linalg.eigvals(M)
+        detM0 = np.linalg.det(M0)
+        detM = np.linalg.det(M)
+        a = sqrt(-detM0 / (detM * eigvals[0]))
+        b = sqrt(-detM0 / (detM * eigvals[1]))
+        xy = np.array([B*E - 2*C*D, B*D - 2*A*E])
+        phi = 0.0 if A == C else (atan(B/(A-C))/2 if abs(C) > abs(A) else pi/2 - atan(-B/(A-C))/2)
+        return Ellipse(xy/(4*A*C - B*B), max(a,b), min(a,b), (phi*180/pi) % 180)
+
 
 
 # def circle_as_ellipse_(C):
@@ -1367,7 +1423,7 @@ class Affine:
     def __init__(self, A, b):
         _ = error_if_not_point_(b=b)
         self.A = np.asarray(A, dtype=float)
-        if A.ndim != 2 or A.shape != (2,2):
+        if self.A.ndim != 2 or self.A.shape != (2,2):
             raise ValueError("`A` cannot be converted to a 2x2 matrix.")
         self.b = np.asarray(b, dtype=float)
         
@@ -1419,7 +1475,7 @@ class Affine:
         b = self.b
         m = np.asarray(m, dtype=float)
         if m.ndim == 2:
-            b = np.repeat(b.reshape(2,1), m.shape[1], axis=1)
+            b = np.repeat(b.reshape(2,1), m.shape[0], axis=1)
         return np.transpose(np.matmul(self.A, np.transpose(m)) + b)
     
     def transform_line(self, line):
