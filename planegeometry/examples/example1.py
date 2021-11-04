@@ -1,5 +1,7 @@
+from math import sqrt
 import planegeometry.geometry as g
 import numpy as np
+import matplotlib.pyplot as plt
 
 A = (0, 0)
 B = (1, 0)
@@ -10,6 +12,30 @@ t.show()
 print(t.equal_detour_point())
 print(t.incircle())
 circ = t.circumcircle()
+print(circ.includes(A))
+        
+steinerEllipse = t.steiner_ellipse()
+steinerInellipse = t.steiner_inellipse()
+
+figure, axes = plt.subplots(figsize=(10, 10))
+axes.set_aspect(1)
+plt.plot([A[0], B[0], C[0], A[0]], [A[1], B[1], C[1], A[1]])
+axes.add_artist(
+    plt.Polygon(
+        steinerEllipse.path(), closed=True, fill=False, 
+        edgecolor="red", linewidth=2
+    )
+)
+axes.add_artist(
+    plt.Polygon(
+        steinerInellipse.path(), closed=True, fill=False, 
+        edgecolor="green", linewidth=2
+    )
+)
+plt.xlim(-1, 3)
+plt.ylim(-1, 3)
+plt.show()
+
 
 print("******************************")
 ell1 = g.Ellipse((1,1), 5, 1, 30)

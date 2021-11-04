@@ -444,6 +444,14 @@ class Circle:
         v = np.array([-y, x])
         R = self.radical_center(circ2)
         return Line(R, R+v, True, True)
+    
+    def as_ellipse(self):
+        """Converts the circle to an `Ellipse` object.
+ 
+        
+        """
+        r = self.radius
+        return Ellipse(self.center, r, r, 0)
 
 
 def radical_center(circ1, circ2, circ3):
@@ -479,7 +487,7 @@ class Arc:
         _ = error_if_not_positive_(radius=radius)
         _ = error_if_not_number_(alpha1=alpha1)
         _ = error_if_not_number_(alpha2=alpha2)
-        _ = error_if_not_boolean(degrees=degrees)
+        _ = error_if_not_boolean_(degrees=degrees)
         self.center = np.asarray(center, dtype=float)
         self.radius = radius
         self.alpha1 = alpha1
@@ -543,7 +551,7 @@ class Ellipse:
         _ = error_if_not_number_(rminor=rminor)
         _ = error_if_not_positive_(rminor=rminor)
         _ = error_if_not_number_(alpha=alpha)
-        _ = error_if_not_boolean(degrees=degrees)
+        _ = error_if_not_boolean_(degrees=degrees)
         self.center = np.asarray(center, dtype=float)
         self.rmajor = rmajor
         self.rminor = rminor
@@ -692,7 +700,7 @@ class Inversion:
             raise ValueError("`circ1` must be a `Circle` object.")
         if not isinstance(circ2, Circle):
             raise ValueError("`circ2` must be a `Circle` object.")
-        _ = error_if_not_boolean(positive=positive)
+        _ = error_if_not_boolean_(positive=positive)
         c1 = circ1.center
         r1 = circ1.radius
         c2 = circ2.center
@@ -1079,6 +1087,42 @@ class Triangle:
         point = (tc[0]*A + tc[1]*B + tc[2]*C) / tc.sum()
         detour = distance_(A, point) + distance_(B, point) - c
         return (point, detour)
+    
+    def steiner_ellipse(self):
+        """The Steiner ellipse (or circumellipse) of the reference triangle. 
+        This is the ellipse passing through the three vertices of the triangle 
+        and centered at the centroid of the triangle.
+        
+        :returns: An `Ellipse` object.   
+        
+        """
+        if self.flatness == 1:
+            print("The triangle is flat.")
+            return None
+        P = (0, 0)
+        Q = (10, 0)
+        R = (5, 5*sqrt(3))
+        circ = Triangle(P, Q, R).circumcircle()
+        f = Affine.from_mapping_three_points(P, Q, R, self.A, self.B, self.C)
+        return f.transform_ellipse(circ)
+
+    def steiner_inellipse(self):
+        """The Steiner inellipse (or midpoint ellipse) of the reference triangle. 
+        This is the ellipse tangent to the sides of the triangle at their 
+        midpoints, and centered at the centroid of the triangle.
+        
+        :returns: An `Ellipse` object.   
+        
+        """
+        if self.flatness == 1:
+            print("The triangle is flat.")
+            return None
+        P = (0, 0)
+        Q = (10, 0)
+        R = (5, 5*sqrt(3))
+        circ = Triangle(P, Q, R).incircle()
+        f = Affine.from_mapping_three_points(P, Q, R, self.A, self.B, self.C)
+        return f.transform_ellipse(circ)
 
 
 class Affine:
@@ -1141,6 +1185,7 @@ class Affine:
         
         """
         b = self.b
+        m = np.asarray(m, dtype=float)
         if m.ndim == 2:
             b = np.repeat(b.reshape(2,1), m.shape[1], axis=1)
         return np.transpose(np.matmul(self.A, np.transpose(m)) + b)
@@ -1167,7 +1212,7 @@ class Affine:
             print("The affine map is singular.")
             return
         if isinstance(ell, Circle):
-            ell = circle_as_ellipse_(ell)
+            ell = Circle.as_ellipse(ell)
         A, B, C, D, E, F = ell.equation().values()
         X = np.array([
             [A, B/2, D/2],
@@ -1196,7 +1241,7 @@ class Affine:
         return Ellipse((x0, y0), a, b, theta, degrees = degrees)
     
     @classmethod
-    def from_three_points(cls, P1, P2, P3, Q1, Q2, Q3):
+    def from_mapping_three_points(cls, P1, P2, P3, Q1, Q2, Q3):
         """Affine transformation mapping three given points to three given points.
         
         :param P1,P2,P3: three non-collinear points
@@ -1222,8 +1267,8 @@ class Affine:
         if collinear_(Q1, Q2, Q3):
             print("Q1, Q2 and Q3 are collinear.")
             return
-        f1 = Affine(np.transpose(np.column_stack((P2-P1, P3-P1))), P1)
-        f2 = Affine(np.transpose(np.column_stack((Q2-Q1, Q3-Q1))), Q1)
+        f1 = Affine(np.column_stack((P2-P1, P3-P1)), P1)
+        f2 = Affine(np.column_stack((Q2-Q1, Q3-Q1)), Q1)
         return f1.inverse().compose(f2)
     
     @classmethod
@@ -1462,7 +1507,7 @@ class Mobius:
         return Line(self.transform(line.A), self.transform(line.B))
     
     @classmethod
-    def from_three_points(cls, P1, P2, P3, Q1, Q2, Q3):
+    def from_mapping_three_points(cls, P1, P2, P3, Q1, Q2, Q3):
         """Möbius transformation mapping three given points to three given points.
         
         :param P1,P2,P3: three distinct points, `inf` allowed
