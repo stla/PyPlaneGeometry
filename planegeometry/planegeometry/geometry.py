@@ -17,6 +17,9 @@ from .internal import (
     from_complex_,
     mod2_,
     farey_stack_,
+    is_number_, 
+    is_vector_, 
+    is_real_vector_, 
     error_if_not_point_,
     error_if_not_number_,
     error_if_not_positive_,
@@ -640,6 +643,62 @@ class Ellipse:
             alpha
         )
     
+    def point_from_angle(self, theta, degrees=True):
+        """
+        
+        """
+        _ = error_if_not_boolean_(degrees=degrees)
+        if not is_number_(theta):
+            if not is_vector_(theta):
+                raise ValueError("`theta` must be a number or a vector of numbers.")
+            theta = np.asarray(theta, dtype=float)
+            if not is_real_vector_(theta):
+                raise ValueError("`theta` cannot be converted to a vector of real numbers.")
+        else:
+            theta = np.array([theta], dtype=float)
+        O = self.center
+        a = self.rmajor
+        b = self.rminor
+        alpha = self.alpha
+        if self.degrees:
+            alpha *= pi/180
+        if degrees:
+            theta *= pi/180
+        theta_mod_2pi = theta % (2*pi)
+        sgn = 2 * (theta_mod_2pi <= sepsilon_) - 1
+        theta_eps = theta + sepsilon_ * sgn
+        t = np.arctan2(a/b, 1/np.tan(theta_mod_2pi)) + theta_eps - theta_eps % pi
+        out = ellipse_points_(t, O, a, b, alpha)
+        if len(theta) == 1:
+            out = out[0]
+        return out
+
+    def normal(self, t):
+        """Normal unit vector to the ellipse.
+    
+        :param t: a number, the eccentric angle in radians of the point of the
+        ellipse at which we want the normal unit vector
+        :returns: The normal unit vector to the ellipse at the point given by
+        eccentric angle `t`.
+
+        """        
+        _ = error_if_not_number_(t=t)
+        O = self.center
+        a = self.rmajor
+        b = self.rminor
+        alpha = self.alpha
+        if self.degrees:
+            alpha *= pi/180
+        cosalpha = cos(alpha)
+        sinalpha = sin(alpha)
+        x = -a * sin(t)
+        y = b * cos(t)
+        v = np.array([
+            sinalpha*x + cosalpha*y,
+            -cosalpha*x + sinalpha*y                
+        ])
+        return v / vlength_(v)
+        
     def equation(self):
         """The coefficients of the implicit equation of the ellipse, 
         `Ax² + Bxy + Cy² + Dx + Ey + F = 0`.

@@ -27,8 +27,14 @@ def error_if_not_boolean_(**kwargs):
         raise ValueError("`%s` must be `True` or `False`." % key)
     return
 
+def is_vector_(P):
+    return isinstance(P, tuple) or isinstance(P, list) or (isinstance(P, np.ndarray) and P.ndim == 1)
+
+def is_real_vector_(P):
+    return P.ndim == 1 and np.all(np.isreal(P))
+
 def is_point_(P):
-    return (isinstance(P, tuple) or isinstance(P, list) or isinstance(P, np.ndarray)) and len(P) == 2 and is_number_(P[0]) and is_number_(P[1])
+    return is_vector_(P) and len(P) == 2 and is_number_(P[0]) and is_number_(P[1])
 
 def error_if_not_point_(**kwargs):
     key = list(kwargs.keys())[0]

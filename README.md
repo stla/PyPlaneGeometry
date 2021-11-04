@@ -33,3 +33,5 @@ Plane geometry with Python.
 ![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/ModularTessellation.gif)
 
 ![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/Inversions.png)
+
+![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/EllipticalBilliard.gif)
