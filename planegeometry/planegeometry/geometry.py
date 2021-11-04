@@ -35,7 +35,11 @@ from .internal import (
     error_if_not_point_,
     error_if_not_number_,
     error_if_not_positive_,
-    error_if_not_boolean_
+    error_if_not_boolean_,
+    runif_on_circle_,
+    runif_in_circle_,
+    runif_on_ellipse_,
+    runif_in_ellipse_
 )
 
 def is_inf(x):
@@ -349,6 +353,42 @@ class Circle:
         O = self.center
         d2 = dot_(P-O)
         return isclose(d2, r*r)
+
+    def contains(self, P):
+        """Check whether a point is contained in the reference circle.
+        
+        :param P: a point
+        :returns: A Boolean value.
+        
+        """
+        _ = error_if_not_point_(P=P)
+        P = np.asarray(P, dtype=float)
+        r = self.radius
+        O = self.center
+        d2 = dot_(P-O)
+        return d2 <= r*r
+    
+    def random_points(self, n_points, where="in"):
+        """Random points in the circle or on the circle.
+        
+        :param n_points: desired number of points
+        :param where: either `"in"` or `"on"`
+        :returns: A matrix with `n_points` rows and two columns; each row is 
+        a random point inside the circle if `where="in"` or on the boundary of 
+        the circle if `where="on"`.
+        
+        """
+        if not isinstance(n_points, int):
+            raise ValueError("`n_points` must be an integer.")
+        _ = error_if_not_positive_(n_points=n_points)
+        center = self.center
+        radius = self.radius
+        if where == "in":
+            return runif_in_circle_(n_points, radius) + center
+        if where == "on":
+            return runif_on_circle_(n_points, radius) + center
+        raise ValueError("The `where` argument must be `'in'` or `'on'`.")
+
     
     def point_from_angle(self, alpha, degrees=True):
         """Get a point on the reference circle from its polar angle.
@@ -706,6 +746,27 @@ class Ellipse:
             self.rminor,
             alpha
         )
+
+    def random_points(self, n_points, where="in"):
+        """Random points in/on the ellipse.
+        
+        :param n_points: desired number of points
+        :param where: either `"in"` or `"on"`
+        :returns: A matrix with `n_points` rows and two columns; each row is 
+        a random point inside the ellipse if `where="in"` or on the boundary
+        of the ellipse if `where="on"`.
+        
+        """
+        if not isinstance(n_points, int):
+            raise ValueError("`n_points` must be an integer.")
+        _ = error_if_not_positive_(n_points=n_points)
+        center = self.center
+        A = self.shape_matrix()
+        if where == "in":
+            return runif_in_ellipse_(n_points, A) + center
+        if where == "on":
+            return runif_on_ellipse_(n_points, A) + center
+        raise ValueError("The `where` argument must be `'in'` or `'on'`.")
     
     def point_from_angle(self, theta, degrees=True):
         """
@@ -804,6 +865,32 @@ class Ellipse:
         x, y = P
         zero = A*x*x + B*x*y + C*y*y + D*x + E*y + F
         return isclose(1.0, zero+1.0)
+
+    def contains(self, P):
+        """Check whether a point is contained in the ellipse.
+        
+        :param P: a point
+        :returns: A Boolean value.
+        
+        """
+        _ = error_if_not_point_(P=P)
+        A, B, C, D, E, F = self.equation().values()
+        x, y = P
+        return A*x*x + B*x*y + C*y*y + D*x + E*y + F <= 0
+    
+    def shape_matrix(self):
+        """The 2x2 symmetric matrix `S` associated to the reference ellipse. 
+        The equation of the ellipse is `(M-O)' S (M-O) = 1`.
+        
+        """
+        A, B, C, D, E, F = self.equation().values()
+        X = np.array([
+            [A, B/2, D/2],
+            [B/2, C, E/2],
+            [D/2, E/2, F]            
+        ])
+        K = - np.linalg.det(X) / (A*C - B*B/4)
+        return X[0:2, 0:2] / K
     
     def theta2t(self, theta, degrees=True):
         """Convert angle to eccentric angle.

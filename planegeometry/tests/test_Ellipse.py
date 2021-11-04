@@ -1,7 +1,26 @@
-from planegeometry.geometry import Ellipse
+from planegeometry.geometry import Ellipse, Affine
 
 def test_ellipse_equation():
     ell = Ellipse((4,3), 5, 1, 100)
     A, B, C, D, E, F = ell.equation().values()
     ell2 = Ellipse.from_equation(A, B, C, D, E, F)
     assert ell.is_equal(ell2)
+    
+def test_affine_transforms_ellipse():
+    ell0 = Ellipse((1,1), 5, 2, 30)
+    f = Affine([[3.5, 2], [0, 4]], [-1, 1.25])
+    ell1 = f.transform_ellipse(ell0)
+    path0 = ell0.path(3)
+    Q = f.transform(path0[0, :])
+    assert ell1.includes(Q)
+    Q = f.transform(path0[1, :])
+    assert ell1.includes(Q)
+    Q = f.transform(path0[2, :])
+    assert ell1.includes(Q)
+
+def test_ellipse_random():
+    ell = Ellipse((4,3), 5, 1, 100)
+    rpoints = ell.random_points(3, "on")
+    assert ell.includes(rpoints[0, :])
+    assert ell.includes(rpoints[1, :])
+    assert ell.includes(rpoints[2, :])

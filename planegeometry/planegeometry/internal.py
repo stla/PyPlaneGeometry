@@ -162,3 +162,21 @@ def mod2_(z):
     re = z.real
     im = z.imag
     return re*re + im*im
+
+def runif_on_circle_(n, r):
+    sims = np.random.normal(size=(2, n))
+    norms = np.apply_along_axis(np.linalg.norm, axis=0, arr=sims)
+    return np.transpose(r * sims/norms)
+
+def runif_in_circle_(n, r):
+    return r * runif_on_circle_(n, np.sqrt(np.random.rand(n)))
+
+def runif_on_ellipse_(n, A): 
+    U = np.transpose(np.linalg.cholesky(A))
+    X = np.transpose(runif_on_circle_(n, 1))
+    return np.transpose(np.linalg.solve(U, X))
+
+def runif_in_ellipse_(n, A): 
+    U = np.transpose(np.linalg.cholesky(A))
+    X = np.transpose(runif_in_circle_(n, 1))
+    return np.transpose(np.linalg.solve(U, X))
