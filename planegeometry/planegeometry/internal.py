@@ -180,3 +180,18 @@ def runif_in_ellipse_(n, A):
     U = np.transpose(np.linalg.cholesky(A))
     X = np.transpose(runif_in_circle_(n, 1))
     return np.transpose(np.linalg.solve(U, X))
+
+def ellipse_from_center_and_eigen_(center, e):
+    values, vectors = e
+    if np.any(values <= 0):
+        raise ValueError("The matrix is not positive.")
+    v = vectors[:, 0]
+    alpha = (atan2(v[1], v[0]) * 180/pi) % 180
+    a <- 1/sqrt(values[0])
+    b <- 1/sqrt(values[1])
+    return {
+        "center": center, 
+        "rmajor": a, 
+        "rminor": b, 
+        "alpha": alpha
+    }

@@ -39,7 +39,8 @@ from .internal import (
     runif_on_circle_,
     runif_in_circle_,
     runif_on_ellipse_,
-    runif_in_ellipse_
+    runif_in_ellipse_,
+    ellipse_from_center_and_eigen_
 )
 
 def is_inf(x):
@@ -996,7 +997,26 @@ class Ellipse:
         coeffs = Ellipse.equation_from_five_points(P1, P2, P3, P4, P5)
         A, B, C, D, E, F = coeffs.values()
         return Ellipse.from_equation(A, B, C, D, E, F)
+    
+    @classmethod
+    def from_center_and_matrix(center, S):
+        """
         
+        """
+        _ = error_if_not_point_(center=center)
+        center = np.asarray(center, dtype=float)
+        e = np.linalg.eigh(S)
+        params = ellipse_from_center_and_eigen_(center, e)
+        return Ellipse(
+            params["center"], params["rmajor"], params["rminor"], params["alpha"]
+        )
+        
+        
+EllipseFromCenterAndMatrix <- function(center, S){
+  stopifnot(isSymmetric(S))
+  e <- eigen(S, symmetric = TRUE)
+  if(any(e$values <= 0)) stop("`S` is not positive.")
+  .EllipseFromCenterAndEigen(center, e)
 
 
 
