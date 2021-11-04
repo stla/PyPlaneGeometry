@@ -250,6 +250,24 @@ class Line:
         """
         return iota.invert_line(self)
 
+    def intersection_with_circle(self, circ):
+        """
+        
+        """
+        return intersection_circle_line(circ, self)
+
+    def intersection_with_ellipse(self, ell):
+        """
+        
+        """
+        return intersection_ellipse_line(ell, self)
+
+    def intersection_with_line(self, line2, strict=False):
+        """
+        
+        """
+        return intersection_line_line(self, line2, strict=strict)
+
 
 
 def intersection_line_line(line1, line2, strict=False):
@@ -456,6 +474,12 @@ class Circle:
         """
         r = self.radius
         return Ellipse(self.center, r, r, 0)
+
+    def intersection_with_line(self, line):
+        """
+        
+        """
+        return intersection_circle_line(self, line)
 
 
 def radical_center(circ1, circ2, circ3):
@@ -761,6 +785,11 @@ class Ellipse:
         theta_eps = theta + sgn*sepsilon_
         return atan2(self.rmajor/self.rminor, 1/tan(theta_mod_2pi)) + theta_eps - theta_eps % pi
 
+    def intersection_with_line(self, line):
+        """
+        
+        """
+        return intersection_ellipse_line(self, line)
 
 
 # def circle_as_ellipse_(C):
