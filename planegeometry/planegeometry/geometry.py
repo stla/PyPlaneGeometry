@@ -40,6 +40,8 @@ from .internal import (
     runif_in_circle_,
     runif_on_ellipse_,
     runif_in_ellipse_,
+    runif_on_triangle_,
+    runif_in_triangle_,
     ellipse_from_center_and_eigen_,
     inversion_to_conjugate_mobius_
 )
@@ -543,6 +545,12 @@ class Circle:
         
         """
         return intersection_circle_line(self, line)
+    
+    def intersection_with_circle(self, circ2):
+        """
+        
+        """
+        return intersection_circle_circle(self, circ2)
 
 
 def radical_center(circ1, circ2, circ3):
@@ -649,6 +657,42 @@ def intersection_circle_line(circ, line):
         return [I1 + C, I2 + C]
     return intersections + C
         
+def intersection_circle_circle(circ1, circ2):
+    """Intersection(s) of two circles.
+    
+    :param circ1,circ2: `Circle` objects
+    :returns: A `Circle` object if the two circles are equal, `None` if the 
+    two circles do not intersect, a point if the two circles are tangent, or 
+    a list of two points.
+
+    """
+    if not isinstance(circ1, Circle):
+        raise ValueError("`circ1` is not a `Circle` object.")
+    if not isinstance(circ2, Circle):
+        raise ValueError("`circ2` is not a `Circle` object.")
+    if circ1.is_equal(circ2):
+        return circ1
+    r1 = circ1.radius
+    r2 = circ2.radius
+    center1 = circ1.center
+    center2 = circ2.center
+    d2 = dot_(center1 - center2)
+    sumRadii2 = (r1 + r2)**2
+    if d2 > sumRadii2 + sepsilon_ or d2 < (r1-r2)**2 - sepsilon_:
+        return None
+    touch = sumRadii2 - d2 < sepsilon_ or d2 - (r1-r2)**2 < sepsilon_
+    x, y = center1 - center2
+    lsquared = x*x + y*y
+    cosine = max(
+        min((r2*r2 - r1*r1 - lsquared) / (r1*sqrt(4*lsquared)), 1), -1
+    )
+    atg2 = atan2(y, x)
+    theta = atg2 + acos(cosine)
+    P1 = center1 + r1 * unit_vector_(theta)
+    if touch:
+        return P1
+    theta = atg2 - acos(cosine)
+    return [P1, center1 + r1 * unit_vector_(theta)]    
 
 def intersection_ellipse_line(ell, line):
     """Intersection(s) of an ellipse and a line.
@@ -1685,6 +1729,25 @@ class Triangle:
         circ = Triangle(P, Q, R).incircle()
         f = Affine.from_mapping_three_points(P, Q, R, self.A, self.B, self.C)
         return f.transform_ellipse(circ)
+
+    def random_points(self, n_points, where="in"):
+        """Random points inside the triangle or on the boundary of the triangle.
+        
+        :param n_points: desired number of points
+        :param where: either `"in"` or `"on"`
+        :returns: A matrix with `n_points` rows and two columns; each row is 
+        a random point inside the triangle if `where="in"` or on the boundary 
+        of the triangle if `where="on"`.
+        
+        """
+        if not isinstance(n_points, int):
+            raise ValueError("`n_points` must be an integer.")
+        _ = error_if_not_positive_(n_points=n_points)
+        if where == "in":
+            return runif_in_triangle_(n_points, self.A, self.B, self.C)
+        if where == "on":
+            return runif_on_triangle_(n_points, self.A, self.B, self.C)
+        raise ValueError("The `where` argument must be `'in'` or `'on'`.")
 
 
 class Affine:

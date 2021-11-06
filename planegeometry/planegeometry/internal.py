@@ -181,6 +181,41 @@ def runif_in_ellipse_(n, A):
     X = np.transpose(runif_in_circle_(n, 1))
     return np.transpose(np.linalg.solve(U, X))
 
+def runif_on_triangle_(n, A, B, C):
+    l1 = distance_(A, B)
+    l2 = distance_(B, C)
+    l3 = distance_(C, A)
+    r = np.random.uniform(0.0, l1+l2+l3, size=n)
+    out = np.empty((n, 2), dtype=float)
+    for j in range(n):
+        u = r[j]
+        if u <= l1:
+            s = (l1 - u) / l1
+            t = u / l1
+            out[j, :] = s * A + t * B
+        elif u <= l1 + l2:
+            s = (l2 - u + l1) / l2
+            t = (u - l1) / l2
+            out[j, :] = s * B + t * C
+        else:
+            s = (l3 - u + l1 + l2) / l3
+            t = (u - l1 - l2) / l3
+            out[j, :] = s * C + t * A
+    return out
+
+def runif_in_triangle_(n, A, B, C):
+    r1 = np.random.rand(n)
+    r2 = np.sqrt(np.random.rand(n))
+    a = 1.0 - r2
+    b = r2 * (1.0 - r1)
+    c = r1 * r2
+    return np.column_stack(
+        (
+            A[0]*a + B[0]*b + C[0]*c,
+            A[1]*a + B[1]*b + C[1]*c
+        )    
+    )
+
 def ellipse_from_center_and_eigen_(center, e):
     values, vectors = e
     if np.any(values <= 0):
