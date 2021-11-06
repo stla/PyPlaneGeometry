@@ -3,6 +3,14 @@ import planegeometry.geometry as g
 import numpy as np
 import matplotlib.pyplot as plt
 
+R = g.Rotation((1,1), 30)
+M = (2,1)
+R.rotate(M)
+
+M = [[2,1], [2,1], [2,1]]
+R.rotate(M)
+
+print("##############################")
 A = (0, 0)
 B = (1, 0)
 C = (2, 1)

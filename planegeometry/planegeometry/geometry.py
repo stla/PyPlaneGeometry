@@ -175,7 +175,7 @@ class Line:
         
         :param M: the point through which the perpendicular passes
         :param extendH: Boolean, whether to extend the perpendicular line beyond the meeting point
-        :param extendM: Boolean,  whether to extend the perpendicular line beyond the point `M`
+        :param extendM: Boolean, whether to extend the perpendicular line beyond the point `M`
         :returns: A `Line` object; its two points are the meeting point and the point `M`.
         
         """
@@ -1883,6 +1883,7 @@ class Mobius:
         :returns: A `Mobius` object corresponding to the Möbius transformation raised to the power `t`.
         
         """
+        _ = error_if_not_number_(t=t)
         M = self.M
         detM = det2x2_mat_(M)
         trM = M[0, 0] + M[1, 1]
@@ -2274,4 +2275,62 @@ class Projection:
         """
         M = self.get3x3matrix()
         return Affine(M[0:2, 0:2], M[0:2, 2])
+
+
+class Rotation:
+    """A class for rotations. A rotation is given by its center and its angle.
+    
+    :param center: a point
+    :param theta: a number, the angle of the rotation
+    :param degrees: Boolean, whether the angle is given in degrees
+    
+    """
+    def __init__(self, center, theta, degrees=True):
+        _ = error_if_not_point_(center=center)
+        _ = error_if_not_number_(theta=theta)
+        _ = error_if_not_boolean_(degrees=degrees)
+        self.center = np.asarray(center, dtype=float)
+        self.theta = theta
+        self.degrees = degrees
+        
+    def __str__(self):
+        return str(self.__dict__)
+
+    def show(self):
+        unit = "degree" if self.degrees else "radian"
+        s = "" if self.theta == 1 else "s"
+        print("Rotation:\n")
+        print("    center: ", tuple(self.center), "\n")
+        print("     angle: ", self.theta, unit + s, "\n")
+        
+    def rotate(self, M):
+        try:
+            M = np.asarray(M, dtype=float)
+        except:
+            raise ValueError("Invalid `M` argument.")
+        M_is_point = False
+        if is_real_vector_(M):
+            M.resize((1, 2))
+            M_is_point = True
+        else: 
+            if M.ndim != 2 or M.shape[1] != 2:
+                raise ValueError("`M` cannot be converted to a nx2 matrix.")
+        O = self.center
+        theta = self.theta
+        if self.degrees:
+            theta *= pi/180
+        costheta = cos(theta)
+        sintheta = sin(theta)
+        Mc = M - O
+        x = Mc[:, 0]
+        y = Mc[:, 1]
+        out = np.column_stack(
+            (
+                costheta*x - sintheta*y,
+                sintheta*x + costheta*y                
+            )    
+        ) + O
+        if M_is_point:
+            out = out[0, :]
+        return out
 
