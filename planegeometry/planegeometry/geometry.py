@@ -40,7 +40,8 @@ from .internal import (
     runif_in_circle_,
     runif_on_ellipse_,
     runif_in_ellipse_,
-    ellipse_from_center_and_eigen_
+    ellipse_from_center_and_eigen_,
+    inversion_to_conjugate_mobius_
 )
 
 def is_inf(x):
@@ -1079,6 +1080,26 @@ class Inversion:
         Ap = self.invert(A)
         Bp = self.invert(B)
         return Triangle(c0, Ap, Bp).circumcircle()
+    
+    def compose(self, iota2, left=True):
+        """Compose the reference inversion with another inversion. The result 
+        is a Möbius transformation.
+        
+        :param iota2: an `Inversion` object
+        :param left: Boolean, whether to compose at left or at right (i.e.
+        returns `iota2 o iota1` or `iota1 o iota2`)
+        :returns: A `Mobius` object.
+        
+        """
+        if not isinstance(iota2, Inversion):
+            raise ValueError("`iota2` must be an `Inversion` object.")
+        _ = error_if_not_boolean_(left=left)
+        if not left:
+            return iota2.compose(self)
+        Mob3 = Mobius(np.conjugate(inversion_to_conjugate_mobius_(self)))
+        Mob2 = Mobius(inversion_to_conjugate_mobius_(iota2))
+        return Mob3.compose(Mob2)
+
     
     @classmethod
     def on_circle(cls, circ):

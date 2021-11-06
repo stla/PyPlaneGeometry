@@ -1,5 +1,5 @@
 from planegeometry.geometry import Inversion, Circle
-#import numpy as np
+import numpy as np
 
 def test_invert_circle():
     circ0 = Circle((0,2), 3)
@@ -110,3 +110,20 @@ def test_fixing_three_circles():
     assert circ1.is_equal(newcirc1)
     assert circ2.is_equal(newcirc2)
     assert circ3.is_equal(newcirc3)
+    
+def test_compose_inversions():
+    iota1 = Inversion((1, 1), 2)
+    iota2 = Inversion((3, 2), 4)
+    M = (4, 5) # np.array([4, 5], dtype=float)
+    P = iota1.invert(iota2.invert(M))
+    Mob = iota2.compose(iota1)
+    Q = Mob.transform(M)
+    assert np.allclose(P, Q)
+    # with a negative power
+    iota2 = Inversion((3, 2), -4)
+    M = (4, 5) # np.array([4, 5], dtype=float)
+    P = iota1.invert(iota2.invert(M))
+    Mob = iota2.compose(iota1)
+    Q = Mob.transform(M)
+    assert np.allclose(P, Q)
+    

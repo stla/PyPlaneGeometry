@@ -195,3 +195,8 @@ def ellipse_from_center_and_eigen_(center, e):
         "rminor": b, 
         "alpha": alpha
     }
+
+def inversion_to_conjugate_mobius_(iota):
+    C = complex(*iota.pole)
+    k = iota.power
+    return [[C, k - mod2_(C)], [1.0, -C.conjugate()]]
