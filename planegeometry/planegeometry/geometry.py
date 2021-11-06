@@ -2310,7 +2310,7 @@ class Rotation:
             raise ValueError("Invalid `M` argument.")
         M_is_point = False
         if is_real_vector_(M):
-            M.resize((1, 2))
+            M = M.reshape((1, 2))
             M_is_point = True
         else: 
             if M.ndim != 2 or M.shape[1] != 2:
@@ -2333,4 +2333,96 @@ class Rotation:
         if M_is_point:
             out = out[0, :]
         return out
+
+    def transform(self, M):
+        """An alias of `rotate`.
+        
+        """
+        return self.rotate(M)
+    
+    def rotate_circle(self, circ):
+        """Rotate a circle.
+        
+        :param circ: a `Circle` object
+        :returns: A `Circle` object.
+        
+        """
+        if not isinstance(circ, Circle):
+            raise ValueError("`circ` must be a `Circle` object.")
+        return Circle(self.rotate(circ.center), circ.radius)
+
+    def transform_circle(self, circ):
+        """An alias of `rotate_circle`.
+        
+        """
+        return self.rotate_circle(circ)
+
+    def rotate_ellipse(self, ell):
+        """
+        
+        """
+        if not isinstance(ell, Ellipse):
+            raise ValueError("`ell` must be an `Ellipse` object.")
+        degrees = ell.degrees
+        theta = self.theta
+        if degrees and not self.degrees:
+            theta *= 180/pi
+        elif not degrees and self.degrees:
+          theta *= pi/180
+        return Ellipse(
+            self.rotate(ell.center), ell.rmajor, ell.rminor,
+            ell.alpha + theta, degrees
+        )
+
+    def transform_ellipse(self, ell):
+        """An alias of `rotate_ellipse`.
+        
+        """
+        return self.rotate_ellipse(ell)
+
+    def rotate_line(self, line):
+        """Rotate a line.
+        
+        """
+        if not isinstance(line, Line):
+            raise ValueError("`line` must be a `Line` object.")
+        return Line(
+            self.rotate(line.A), self.rotate(line.B), line.extendA, line.extendB
+        )
+
+    def transform_line(self, line):
+        """An alias of `rotate_line`.
+        
+        """
+        return self.rotate_line(line)
+    
+    def get3x3matrix(self):
+        """Augmented matrix of the rotation.
+        
+        """
+        theta = self.theta
+        if self.degrees:
+            theta *= pi/180
+        x, y = self.center
+        costheta = cos(theta)
+        sintheta = sin(theta)
+        W = np.array([
+            (1-costheta)*x + sintheta*y,
+            -sintheta*x + (1-costheta)*y,
+            1.0                
+        ])
+        return np.column_stack(
+            (
+                np.array([costheta, sintheta, 0.0]),
+                np.array([-sintheta, costheta, 0.0]),
+                W
+            )
+        )
+        
+    def as_affine(self):
+        """Convert the rotation to an `Affine` object.
+        
+        """
+        M = self.get3x3matrix()
+        return Affine(M[0:2, 0:2], M[0:2, 2])
 
