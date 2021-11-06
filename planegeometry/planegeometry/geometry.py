@@ -262,7 +262,7 @@ class Line:
     def invert(self, iota):
         """Invert the reference line.
         
-        :param iota: an `Inversion` object
+        :param iota: an `Inversion.fro` object
         :returns: A `Line` object or a `Circle` object.
         
         """
@@ -428,7 +428,7 @@ class Circle:
             raise ValueError("`P2` is not in the interior of the reference circle.")
         if collinear_(I, P1, P2):
             return Line(P1, P2, not arc, not arc)
-        iota = Inversion(I, r2)
+        iota = Inversion.fro(I, r2)
         P1prime = iota.invert(P1)
         P2prime = iota.invert(P2)
         line1 = Line(P1, P1prime)
@@ -562,6 +562,75 @@ def radical_center(circ1, circ2, circ3):
     l2 = circ1.radical_axis(circ3)
     return line_line_intersection_(l1.A, l1.B, l2.A, l2.B)
    
+
+def mid_circles(circ1, circ2):
+    """Return the mid-circle(s) of two circles. A mid-circle of two circles is 
+    a generalized circle (i.e. a circle or a line) such that the Inversion.fro on 
+    this circle swaps the two circles. The case of a line appears only when 
+    the two circles have equal radii.
+
+    :param circ1,circ2: `Circle` objects
+    :returns: A `Circle` object, or a `Line` object, or a list of two such 
+    objects.
+    
+    """
+    if not isinstance(circ1, Circle):
+        raise ValueError("`circ1` is not a `Circle` object.")
+    if not isinstance(circ2, Circle):
+        raise ValueError("`circ2` is not a `Circle` object.")
+    r1 = circ1.radius
+    r2 = circ2.radius
+    O1 = circ1.center
+    O2 = circ2.center
+    if r1 == r2:
+        if np.allclose(O1, O2): # O1=O2
+            print("The two circles are equal; every diameter is a mid-circle.")
+            out = circ1
+        else:
+            d2 = dot_(O1 - O2)
+            sumRadii2 = (r1 + r2)**2
+            I = (O1 + O2) / 2
+            x, y = O2 - O1
+            v = np.array([y, -x])
+            line = Line(I+v, I-v)
+            if d2 < sumRadii2: # they intersect at two points
+                out = [
+                  Circle(I, sqrt(abs(dot_(I-O2) - r2*r2))),
+                  line
+                ]
+            else: # they are tangent or they do not intersect
+              out = line
+    else: # r1 != r2
+        d2 = dot_(O1 - O2)
+        sumRadii2 = (r1 + r2)**2
+        rho = r1 / r2
+        if d2 > sumRadii2 + sepsilon_: # they are outside each other
+            I = O1 - rho/(1-rho)*(O2-O1)
+            k = rho * abs(dot_(I-O2) - r2*r2)
+            out = Circle(I, sqrt(k))
+        elif d2 < (r1-r2)**2 - sepsilon_: # one contains the other
+            I = O1 + rho/(1+rho)*(O2-O1)
+            k = rho * abs(dot_(I-O2) - r2*r2)
+            out = Circle(I, sqrt(k))
+        elif sumRadii2 - d2 < sepsilon_: # they are externally tangent
+            I = O1 - rho/(1-rho)*(O2-O1)
+            k = rho * abs(dot_(I-O2) - r2*r2)
+            out = Circle(I, sqrt(k))
+        elif d2 - (r1-r2)**2 < sepsilon_: # they are internally tangent
+            I = O1 + rho/(1+rho)*(O2-O1)
+            k = rho * abs(dot_(I-O2) - r2*r2)
+            out = Circle(I, sqrt(k))
+        else: # they intersect at two points
+            I1 = O1 - rho/(1-rho)*(O2-O1)
+            k1 = rho * abs(dot_(I1-O2) - r2*r2)
+            I2 = O1 + rho/(1+rho)*(O2-O1)
+            k2 = rho * abs(dot_(I2-O2) - r2*r2)
+            out = [
+              Circle(I1, sqrt(k1)),
+              Circle(I2, sqrt(k2))
+            ]
+    return out
+
 
 def intersection_circle_line(circ, line):
     """Intersection(s) of a circle and a line.
@@ -2166,7 +2235,7 @@ class Reflection:
         """
         return self.transform(P)
         
-    def transform_circle(self, circ):
+    def reflect_circle(self, circ):
         """Reflect a circle.
         
         :param circ: a `Circle` object
@@ -2175,7 +2244,13 @@ class Reflection:
         """
         return Circle(self.transform(circ.center), circ.radius)
 
-    def transform_line(self, line):
+    def transform_circle(self, circ):
+        """An alias of `reflect_circle`.
+        
+        """
+        return self.reflect_circle(circ)
+
+    def reflect_line(self, line):
         """Reflect a line.
         
         :param line: a `Line` object
@@ -2186,6 +2261,12 @@ class Reflection:
             self.transform(line.A), self.transform(line.B),
             line.extendA, line.extendB
         )
+    
+    def transform_line(self, line):
+        """An alias of `reflect_line`.
+        
+        """
+        return self.reflect_line(line)
     
     def as_affine(self):
         """Convert the reflection to an `Affine` object.
