@@ -1,4 +1,4 @@
-from math import cos, sin, sqrt
+from math import cos, sin, sqrt, atan2, pi
 import numpy as np
 from fractions import Fraction as Fr
 import numbers
@@ -187,8 +187,8 @@ def ellipse_from_center_and_eigen_(center, e):
         raise ValueError("The matrix is not positive.")
     v = vectors[:, 0]
     alpha = (atan2(v[1], v[0]) * 180/pi) % 180
-    a <- 1/sqrt(values[0])
-    b <- 1/sqrt(values[1])
+    a = 1/sqrt(values[0])
+    b = 1/sqrt(values[1])
     return {
         "center": center, 
         "rmajor": a, 

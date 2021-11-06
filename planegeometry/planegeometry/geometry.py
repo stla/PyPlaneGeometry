@@ -999,7 +999,7 @@ class Ellipse:
         return Ellipse.from_equation(A, B, C, D, E, F)
     
     @classmethod
-    def from_center_and_matrix(center, S):
+    def from_center_and_matrix(cls, center, S):
         """
         
         """
@@ -1012,11 +1012,6 @@ class Ellipse:
         )
         
         
-EllipseFromCenterAndMatrix <- function(center, S){
-  stopifnot(isSymmetric(S))
-  e <- eigen(S, symmetric = TRUE)
-  if(any(e$values <= 0)) stop("`S` is not positive.")
-  .EllipseFromCenterAndEigen(center, e)
 
 
 
@@ -1086,6 +1081,17 @@ class Inversion:
         return Triangle(c0, Ap, Bp).circumcircle()
     
     @classmethod
+    def on_circle(cls, circ):
+        """An inversion on a circle is the inversion whose pole is the center 
+        of the circle and whose power is the squared radius of the circle.
+        
+        :param circ: `Circle` object
+        :returns: An `Inversion` object.
+        
+        """
+        return Inversion(circ.center, circ.radius**2)
+    
+    @classmethod
     def from_swapping_two_circles(cls, circ1, circ2, positive=True):
         """Inversion swapping two circles.
         
@@ -1145,11 +1151,26 @@ class Inversion:
         return Inversion(O, -a * abs(dot_(O - c2) - r2*r2))
 
     @classmethod
+    def from_fixing_two_circles(cls, circ1, circ2):
+        """Inversion fixing two circles.
+        
+        :param circ1,circ2: `Circle` objects
+        :returns: An `Inversion` object representing an inversion which leaves each of the two circles invariant.
+        
+        """
+        if not isinstance(circ1, Circle):
+            raise ValueError("`circ1` must be a `Circle` object.")
+        if not isinstance(circ2, Circle):
+            raise ValueError("`circ2` must be a `Circle` object.")
+        O = circ1.radical_center(circ2)
+        return Inversion(O, circ1.power(O))
+
+    @classmethod
     def from_fixing_three_circles(cls, circ1, circ2, circ3):
         """Inversion fixing three circles.
         
         :param circ1,circ2,circ3: `Circle` objects
-        :returns: an `Inversion` object representing an inversion which leaves each of the three circles invariant.
+        :returns: An `Inversion` object representing an inversion which leaves each of the three circles invariant.
         
         """
         if not isinstance(circ1, Circle):

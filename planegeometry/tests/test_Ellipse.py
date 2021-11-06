@@ -20,24 +20,30 @@ def test_affine_transforms_ellipse():
     assert ell1.includes(Q)
 
 def test_ellipse_random_on():
-    ell = Ellipse((4,3), 5, 1, 100)
+    ell = Ellipse((4, 3), 5, 1, 100)
     rpoints = ell.random_points(3, "on")
     assert ell.includes(rpoints[0, :])
     assert ell.includes(rpoints[1, :])
     assert ell.includes(rpoints[2, :])
 
 def test_ellipse_random_in():
-    ell = Ellipse((4,3), 5, 1, 100)
+    ell = Ellipse((4, 3), 5, 1, 100)
     rpoints = ell.random_points(3, "in")
     assert ell.contains(rpoints[0, :])
     assert ell.contains(rpoints[1, :])
     assert ell.contains(rpoints[2, :])
     
 def test_ellipse_from_five_points():
-    ell = Ellipse((2,3), 5, 4, 50)
+    ell = Ellipse((2, 3), 5, 4, 50)
     np.random.seed(666)
     pts = ell.random_points(5, "on")
     ell2 = Ellipse.from_five_points(*pts)
     assert ell.is_equal(ell2)
-    
+
+def test_ellipse_matrix():
+    ell = Ellipse((2, 3), 5, 4, 50)
+    S = ell.shape_matrix()
+    ell2 = Ellipse.from_center_and_matrix((2, 3), S)
+    assert ell.is_equal(ell2)
+
 
