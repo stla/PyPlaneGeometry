@@ -785,6 +785,25 @@ class Arc:
             center,
             radius
         )
+    
+    def starting_point(self):
+        """Starting point of the arc.
+        
+        """
+        alpha = self.alpha1
+        if self.degrees:
+            alpha *= pi/180
+        return self.center + self.radius * unit_vector_(alpha)
+        
+    def ending_point(self):
+        """Ending point of the arc.
+        
+        """
+        alpha = self.alpha2
+        if self.degrees:
+            alpha *= pi/180
+        return self.center + self.radius * unit_vector_(alpha)
+        
 
 
 class Ellipse:
