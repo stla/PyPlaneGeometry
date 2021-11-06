@@ -1872,7 +1872,7 @@ class Mobius:
             raise ValueError("The power `k` must be an integer.")
         M = self.M
         if t < 0:
-            M = M.inverse()
+            M = self.inverse().M
             t = -t
         return Mobius(np.linalg.matrix_power(M, t))
     
@@ -1891,7 +1891,7 @@ class Mobius:
             D = np.diag((alpha, alpha))
             if np.allclose(M, D):
                 alpha_t = alpha**t
-                return Mobius(np.diag(alpha_t, alpha_t))
+                return Mobius(np.diag((alpha_t, alpha_t)))
             N = M - D
             if np.allclose(N[:, 1], np.zeros((2,))):
                 v2 = np.array([1.0, 0.0])
@@ -1997,7 +1997,7 @@ class Mobius:
         gamma = gamma0.conjugate() * b * c.conjugate() + gamma0 * d.conjugate() * a + D0 * c.conjugate() *a
         D = D0 * mod2_(a) + 2 * (gamma0 * b.conjugate() * a).real
         if abs(A) > sepsilon_:
-            return Circle(from_complex_(gamma/A), sqrt(mod2_(gamma)/A/A + D/A))
+            return Circle(from_complex_(-gamma/A), sqrt(mod2_(gamma)/A/A + D/A))
         return Line(self.transform(line.A), self.transform(line.B))
     
     @classmethod
