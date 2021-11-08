@@ -552,6 +552,46 @@ class Circle:
         
         """
         return intersection_circle_circle(self, circ2)
+    
+    def is_orthogonal(self, circ2):
+        """Check whether the reference circle is orthogonal to a
+        given circle.
+        
+        :param circ2: a `Circle` object
+        :returns: A Boolean value.
+        
+        """
+        if not isinstance(circ2, Circle):
+            raise ValueError("`circ2` is not a `Circle` object.")
+        d2 = dot_(self.center - circ2.center)
+        r = self.radius
+        r2 = circ2.radius
+        return isclose(d2, r*r + r2*r2)
+    
+    def angle(self, circ2):
+        """Angle between the reference circle and a given circle, if they intersect.
+        
+        :param circ2 a `Circle` object
+        :returns: The angle in radians.
+        
+        """
+        center1 = self.center
+        center2 = circ2.center
+        r1 = self.radius
+        r2 = circ2.radius
+        d2 = dot_(center1 - center2)
+        if d2 > (r1+r2)**2 + sepsilon_ or d2 < (r1-r2)**2 - sepsilon_:
+            print("The two circles do not intersect.")
+            return None
+        b1 = 1/r1
+        b2 = 1/r2
+        a1 = b1*center1
+        a2 = b2*center2
+        bprime1 = r1 * (dot_(a1) - 1)
+        bprime2 = r2 * (dot_(a2) - 1)
+        cos_theta = b1*bprime2/2 + b2*bprime1/2 - dot_(a1, a2)
+        return acos(cos_theta)
+
 
 
 def radical_center(circ1, circ2, circ3):
