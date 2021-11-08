@@ -43,11 +43,12 @@ from .internal import (
     runif_on_triangle_,
     runif_in_triangle_,
     ellipse_from_center_and_eigen_,
-    inversion_to_conjugate_mobius_
+    inversion_to_conjugate_mobius_,
+    is_inf_,
+    are_equal_,
+    mobius_from_three_points_to_zero_one_inf_
 )
 
-def is_inf(x):
-    return isinstance(x, float) and isinf(x)
 
 class Line:
     """A class for lines. A line is initialized by two points it passes through, 
@@ -1175,7 +1176,7 @@ class Inversion:
     
     def invert(self, M):
         pole = self.pole
-        if is_inf(M):
+        if is_inf_(M):
             return pole
         _ = error_if_not_point_(M=M)
         M = np.asarray(M)
@@ -2077,7 +2078,7 @@ class Mobius:
         b = self.b
         c = self.c
         d = self.d
-        if is_inf(P):
+        if is_inf_(P):
             return inf if c == 0 else from_complex_(a / c)
         _ = error_if_not_point_(P=P)
         P = np.asarray(P)
@@ -2161,27 +2162,27 @@ class Mobius:
         :returns: A `Mobius` object, representing the Möbius transformation which sends `Pi` to `Qi` for each i=1,2,3.
             
         """
-        if is_inf(P1):
+        if is_inf_(P1):
             P1 = [inf]
         else:
             _ = error_if_not_point_(P1=P1)
-        if is_inf(P2):
+        if is_inf_(P2):
             P2 = [inf]
         else:
             _ = error_if_not_point_(P2=P2)
-        if is_inf(P3):
+        if is_inf_(P3):
             P3 = [inf]
         else:
             _ = error_if_not_point_(P3=P3)
-        if is_inf(Q1):
+        if is_inf_(Q1):
             Q1 = [inf]
         else:
             _ = error_if_not_point_(Q1=Q1)
-        if is_inf(Q2):
+        if is_inf_(Q2):
             Q2 = [inf]
         else:
             _ = error_if_not_point_(Q2=Q2)
-        if is_inf(Q3):
+        if is_inf_(Q3):
             Q3 = [inf]
         else:
             _ = error_if_not_point_(Q3=Q3)
@@ -2191,43 +2192,18 @@ class Mobius:
         if z1 == z2 or z1 == z3 or z2 == z3:
             print("`P1`, `P2` and `P3` must be distinct.")
             return
-        Mob1 = MobiusMappingThreePoints2ZeroOneInf_(z1, z2, z3)
+        M1 = mobius_from_three_points_to_zero_one_inf_(z1, z2, z3)
+        Mob1 = Mobius(M1)
         w1 = complex(*np.asarray(Q1))
         w2 = complex(*np.asarray(Q2))
         w3 = complex(*np.asarray(Q3))
         if w1 == w2 or w1 == w3 or w2 == w3:
             print("`Q1`, `Q2` and `Q3` must be distinct.")
             return
-        Mob2 = MobiusMappingThreePoints2ZeroOneInf_(w1, w2, w3)
+        M2 = mobius_from_three_points_to_zero_one_inf_(w1, w2, w3)
+        Mob2 = Mobius(M2)
         return Mob1.compose(Mob2.inverse())
 
-
-def MobiusMappingThreePoints2ZeroOneInf_(z1, z2, z3):
-    if isinf(z1.real):
-        M = np.array([
-            [0, z2 - z3],
-            [1, z3]
-        ])
-        return Mobius(M)
-    if isinf(z2.real):
-        M = np.array([
-            [1, -z1],
-            [1, -z3]
-        ])
-        return Mobius(M)
-    if isinf(z3.real):
-        K = 1 / (z2 - z1)
-        M = np.array([
-            [K,  K * z1],
-            [0, 1]
-        ])
-        return Mobius(M)
-    K = (z2 - z3) / (z2 - z1)
-    M = np.array([
-        [K,  -K * z1],
-        [1, -z3]
-    ])
-    return Mobius(M)
 
 def unimodular_matrices(n):
     """Generates unimodular matrices.
@@ -2301,7 +2277,7 @@ class Reflection:
         :returns: The image of `P`.
         
         """
-        if is_inf(P):
+        if is_inf_(P):
             return inf
         _ = error_if_not_point_(P=P)
         P = np.asarray(P, dtype=float)

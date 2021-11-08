@@ -1,7 +1,13 @@
-from math import cos, sin, sqrt, atan2, pi
+from math import cos, sin, sqrt, atan2, pi, isinf
 import numpy as np
 from fractions import Fraction as Fr
 import numbers
+
+def is_inf_(x):
+    return isinstance(x, float) and isinf(x)
+
+def are_equal_(x, y):
+    return (is_inf_(x) and is_inf_(y)) or x==y
 
 def is_number_(x):
     return isinstance(x, numbers.Number) and (not isinstance(x, complex))
@@ -235,3 +241,16 @@ def inversion_to_conjugate_mobius_(iota):
     C = complex(*iota.pole)
     k = iota.power
     return [[C, k - mod2_(C)], [1.0, -C.conjugate()]]
+
+def mobius_from_three_points_to_zero_one_inf_(z1 ,z2, z3):
+    if is_inf_(z1):
+        K = z2 - z3
+        return np.array([[0, K], [1, -z3]])
+    if is_inf_(z2):
+        return np.array([[1, -z1], [1, -z3]])
+    if is_inf_(z3):
+        K = 1 / (z2 - z1)
+        return np.array([[K, -K*z1], [0, 1]])
+    K = (z2 - z3) / (z2 - z1)
+    return np.array([[K, -K*z1], [1, -z3]])
+
