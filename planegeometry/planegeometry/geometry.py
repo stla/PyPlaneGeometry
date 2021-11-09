@@ -1,5 +1,6 @@
 from math import (
     acos, 
+    asin,
     sqrt, 
     tan, 
     atan2, 
@@ -1220,8 +1221,164 @@ class Ellipse:
             params["center"], params["rmajor"], params["rminor"], params["alpha"]
         )
         
+    @classmethod
+    def from_boundary4(cls, points):
+        """
+        Compute the smallest ellipse that passes through 4 boundary points,
+        based on the algorithm by:
+        B. W. Silverman and D. M. Titterington, "Minimum covering ellipses,"
+        SIAM Journal on Scientific and Statistical Computing 1, no. 4 (1980):
+        401-409.
         
+        :param points: an array of shape (4,2) containing points as row
+                vectors, which are on the boundary of the desired ellipse.
+        :returns: An `Ellipse` object.
+        
+        :author: Dor Shaviv
+        """
+        # sort coordinates in clockwise order
+        Sc = points - np.mean(points, axis=0)
+        angles = np.arctan2(Sc[:, 1], Sc[:, 0])
+        points = points[np.argsort(-angles), :]
+    
+        # find intersection point of diagonals
+        A = np.column_stack([points[2, :] - points[0, :], points[1, :] - points[3, :]])
+        b = points[1, :] - points[0, :]
+        s = np.linalg.solve(A, b)
+        diag_intersect = points[0, :] + s[0] * (points[2, :] - points[0, :])
+    
+        # shift to origin
+        points = points - diag_intersect
+    
+        # rotate so one diagonal is parallel to x-axis
+        AC = points[2, :] - points[0, :]
+        theta = atan2(AC[1], AC[0])
+        rot_mat = np.array([[cos(theta), sin(theta)],
+                            [-sin(theta), cos(theta)]])
+        points = rot_mat.dot(points.T).T
+    
+        # shear parallel to x-axis to make diagonals perpendicular
+        m = (points[1, 0] - points[3, 0]) / (points[3, 1] - points[1, 1])
+        shear_mat = np.array([[1, m], [0, 1]], dtype=np.float)
+        points = shear_mat.dot(points.T).T
+    
+        # make the quadrilateral cyclic (i.e. all vertices lie on a circle)
+        b = np.linalg.norm(points, axis=1)
+        d = b[1] * b[3] / (b[2] * b[0])
+        stretch_mat = np.diag(np.array([d ** .25, d ** -.25], dtype=np.float))
+        points = stretch_mat.dot(points.T).T
+    
+        # compute optimal swing angle by solving cubic equation
+        a = np.linalg.norm(points, axis=1)
+        coeff = np.zeros(4)
+        coeff[0] = -4 * a[1] ** 2 * a[2] * a[0]
+        coeff[1] = -4 * a[1] * (a[2] - a[0]) * (a[1] ** 2 - a[2] * a[0])
+        coeff[2] = 3 * a[1] ** 2 * (a[1] ** 2 + a[2] ** 2)\
+            - 8 * a[1] ** 2 * a[2] * a[0] + 3 * (a[1] ** 2 + a[2] ** 2) * a[0] ** 2
+        coeff[3] = coeff[1] / 2.
+        rts = np.roots(coeff)
+        # take the unique root in the interval (-1, 1)
+        rts = rts[(-1 < rts) & (rts < 1)]
+        theta = asin(np.real(rts[0]))
+    
+        # apply transformation D_theta
+        D_mat = np.array([[cos(theta) ** -.5,
+                           sin(theta) * cos(theta) ** -.5],
+                          [0, cos(theta) ** .5]])
+        points = D_mat.dot(points.T).T
+    
+        # find enclosing circle
+        boundary = points[:-1, :]    # only 3 points are needed
+        A = np.vstack([-2 * boundary.T, np.ones(boundary.shape[0])]).T
+        b = -np.sum(boundary ** 2, axis=1)
+        s = np.linalg.solve(A, b)
+    
+        # circle parameters (center and radius)
+        circle_c = s[:2]
+        circle_r = sqrt(np.sum(circle_c ** 2) - s[2])
+    
+        # total affine transform that was applied
+        T_mat = D_mat.dot(stretch_mat).dot(shear_mat).dot(rot_mat)
+    
+        # find original ellipse parameters (in center form)
+        ellipse_c = np.linalg.solve(T_mat, circle_c) + diag_intersect
+        ellipse_F = T_mat.T.dot(T_mat) / circle_r ** 2
+    
+        return Ellipse.from_center_and_matrix(ellipse_c, ellipse_F)
 
+    @classmethod
+    def from_boundary3(cls, points):
+        """Compute the smallest ellipse that passes through 3 boundary points.
+    
+        :param points: an array of shape (3,2) containing points as row
+                vectors, which are on the boundary of the desired ellipse.
+        :returns: An `Ellipse` object.
+
+        :author: Dor Shaviv        
+        """
+        # centroid
+        c = np.mean(points, axis=0)
+    
+        # shift points
+        Sc = points - c
+    
+        # ellipse matrix (center form)
+        F = 1.5 * np.linalg.inv(Sc.T.dot(Sc))
+    
+        return Ellipse.from_center_and_matrix(c, F)
+
+    @classmethod
+    def LownerJohnEllipse(cls, ipoints, bpoints=None):
+        """Minimum area ellipse containing a set of points (ellipse hull).
+        
+        :param ipoints: an array of shape (n,2) containing points as row
+                vectors, which are inside the desired ellipse; it must have at 
+                least three distinct rows
+        :param bpoints: an array of shape (n,2) containing points as row
+                vectors, which are on the boundary of the desired ellipse; 
+                could be `None` (the default)
+        :returns: An `Ellipse` object, the Löwner-John ellipse.
+
+        :author: Dor Shaviv        
+        """
+        if bpoints is None:
+            bpoints = np.empty((0,2))
+        # stopping condition: stop either if interior is empty or if there are 5
+        # points on the boundary, in which case a unique ellipse is determined.
+        if ipoints.shape[0] == 0 or bpoints.shape[0] >= 5:
+
+            # if boundary has only 2 points, ellipse is degenerate
+            if bpoints.shape[0] <= 2:
+                return None
+    
+            # call primitive functions to compute smallest ellipse going through
+            # 3, 4, or 5 points.
+            elif bpoints.shape[0] == 3:
+                return Ellipse.from_boundary3(bpoints)
+            elif bpoints.shape[0] == 4:
+                return Ellipse.from_boundary4(bpoints)
+            else:
+                return Ellipse.from_five_points(*bpoints)
+
+        # choose a random point in the interior set
+        i = np.random.randint(ipoints.shape[0])
+        p = ipoints[i, :]
+    
+        # remove point from interior set
+        ipoints_wo_p = np.delete(ipoints, i, 0)
+    
+        # recursively call the function to find the smallest ellipse containing
+        # the interior points without p
+        ellipse = Ellipse.LownerJohnEllipse(ipoints_wo_p, bpoints)
+    
+        # if p is in this ellipse, then this ellipse is also the smallest ellipse
+        # containing interior
+        if (not ellipse is None) and ellipse.contains(p):
+            return ellipse
+    
+        # if not, then p must be on the boundary of the smallest ellipse
+        else:
+            return Ellipse.LownerJohnEllipse(ipoints_wo_p, np.vstack([bpoints, p]))
 
 
 # def circle_as_ellipse_(C):
