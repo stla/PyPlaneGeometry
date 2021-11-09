@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from planegeometry.geometry import Triangle, intersection_circle_circle
+from planegeometry.geometry import Triangle, intersection_circle_circle, Line
 from planegeometry.internal import is_point_
 from numpy import random, allclose
 
@@ -26,3 +26,21 @@ def test_malfatti_tangent():
     assert allclose(TB, I2)
     assert allclose(TC, I1)
     
+def test_excircles():
+    t = Triangle((0,0), (1,5), (3,3))
+    AB = Line(t.A, t.B)
+    AC = Line(t.A, t.C)
+    BC = Line(t.B, t.C)
+    excircles = t.excircles()
+    IAB = excircles["A"].intersection_with_line(AB)
+    assert is_point_(IAB)
+    IAC = excircles["A"].intersection_with_line(AC)
+    assert is_point_(IAC)
+    IBA = excircles["B"].intersection_with_line(AB)
+    assert is_point_(IBA)
+    IBC = excircles["B"].intersection_with_line(BC)
+    assert is_point_(IBC)
+    ICA = excircles["C"].intersection_with_line(AC)
+    assert is_point_(ICA)
+    ICB = excircles["C"].intersection_with_line(BC)
+    assert is_point_(ICB)

@@ -85,7 +85,10 @@ class Line:
             print("Segment joining A and B.\n")
         
     def direction_offset(self):
-        """Direction and offset of the line.
+        """Direction and offset of the line. The equation of the line is 
+        `cos(direction)x + sin(direction)y = offset`.
+        
+        :returns: The direction and the offset in a dictionary.
         
         """
         A = self.A
@@ -114,7 +117,12 @@ class Line:
     def is_equal(self, line2):
         """Check whether the reference line is equal to another line.
         
+        :param line2: a `Line` object
+        :returns: A Boolean value.
+        
         """
+        if not isinstance(line2, Line):
+            raise ValueError("`line2` is not a `Line` object.")
         do1 = self.direction_offset()
         do2 = line2.direction_offset()
         do1 = (do1["direction"], do1["offset"])
@@ -123,8 +131,13 @@ class Line:
     
     def is_parallel(self, line2):
         """Check whether the reference line is parallel to another line.
+
+        :param line2: a `Line` object
+        :returns: A Boolean value.
         
         """
+        if not isinstance(line2, Line):
+            raise ValueError("`line2` is not a `Line` object.")
         P1 = self.A
         P2 = self.B
         Q1 = line2.A
@@ -146,6 +159,7 @@ class Line:
         
         """
         _ = error_if_not_point_(M=M)
+        _ = error_if_not_boolean_(checkCollinear=checkCollinear)
         M = np.asarray(M, dtype=float)
         A = self.A
         B = self.B
@@ -183,6 +197,8 @@ class Line:
         
         """
         _ = error_if_not_point_(M=M)
+        _ = error_if_not_boolean_(extendH=extendH)
+        _ = error_if_not_boolean_(extendM=extendM)
         A = self.A
         B = self.B
         A_B = B - A
@@ -214,6 +230,7 @@ class Line:
         :returns: A number.
         
         """
+        _ = error_if_not_point_(M=M)
         P = self.projection(M)
         return distance_(M, P)
     
@@ -224,6 +241,7 @@ class Line:
         :returns: A point.
         
         """
+        _ = error_if_not_point_(M=M)
         R = Reflection(self)
         return R.reflect(M)
     
@@ -236,7 +254,9 @@ class Line:
         :returns: A `Line` object.
         
         """
+        _ = error_if_not_number_(alpha=alpha)
         _ = error_if_not_point(O=O)
+        _ = error_if_not_boolean_(degrees=degrees)
         O = np.asarray(O, dtype=float)
         if degrees:
             alpha *= pi/180
@@ -269,6 +289,8 @@ class Line:
         :returns: A `Line` object or a `Circle` object.
         
         """
+        if not isinstance(iota, Inversion):
+            raise ValueError("`iota` must be an `Inversion` object.")
         return iota.invert_line(self)
 
     def intersection_with_circle(self, circ):
@@ -343,7 +365,10 @@ class Circle:
         """
         if not isinstance(circ2, Circle):
             raise ValueError("`circ2` is not a `Circle` object.")
-        return isclose(self.radius, circ2.radius) and np.allclose(self.center, circ2.center)
+        return (
+            isclose(self.radius, circ2.radius) and 
+            np.allclose(self.center, circ2.center)
+        )
         
     def includes(self, P):
         """Check whether a point belongs to the reference circle.
@@ -404,6 +429,7 @@ class Circle:
         
         """
         _ = error_if_not_number_(alpha=alpha)
+        _ = error_if_not_boolean_(degrees=degrees)
         if degrees:
             alpha *= pi/180
         return self.center + self.radius * unit_vector_(alpha)
@@ -418,6 +444,7 @@ class Circle:
         """
         _ = error_if_not_point_(P1=P1)
         _ = error_if_not_point_(P2=P2)
+        _ = error_if_not_boolean_(arc=arc)
         P1 = np.asarray(P1, dtype=float)
         P2 = np.asarray(P2, dtype=float)
         if np.allclose(P1, P2):
@@ -542,13 +569,21 @@ class Circle:
         return Ellipse(self.center, r, r, 0)
 
     def intersection_with_line(self, line):
-        """
+        """Intersection(s) of the reference circle with a line.
+        
+        :param line: a `Line` object
+        :returns: `None` (no intersection), a point (the line is tangent to 
+        the circle), or two points.
         
         """
         return intersection_circle_line(self, line)
     
     def intersection_with_circle(self, circ2):
-        """
+        """Intersection(s) of the reference circle with another circle.
+        
+        :param circ2: a `Circle` object
+        :returns: `None` (no intersection), a point (the two circles are  
+        tangent), or two points.
         
         """
         return intersection_circle_circle(self, circ2)
@@ -571,7 +606,7 @@ class Circle:
     def angle(self, circ2):
         """Angle between the reference circle and a given circle, if they intersect.
         
-        :param circ2 a `Circle` object
+        :param circ2: a `Circle` object
         :returns: The angle in radians.
         
         """
