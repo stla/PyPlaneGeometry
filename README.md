@@ -41,3 +41,6 @@ Plane geometry with Python.
 ![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/SchottkyCircles.png)
 
 ![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/MalfattiApollonian.gif)
+
+![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/Circles_simultaneously_tangent.png)
+

@@ -628,7 +628,20 @@ class Circle:
         cos_theta = b1*bprime2/2 + b2*bprime1/2 - dot_(a1, a2)
         return acos(cos_theta)
 
-
+def circleAB(A, B):
+    """Circle with diameter AB.
+    
+    :param A,B: two distinct points
+    :returns: A `Circle` object.
+    
+    """
+    _ = error_if_not_point_(A=A)
+    _ = error_if_not_point_(B=B)
+    A = np.asarray(A, dtype=float)
+    B = np.asarray(B, dtype=float)
+    if np.allclose(A, B):
+        raise ValueError("`A` and `B` are not distinct.")
+    return Circle((A+B)/2, distance_(A, B)/2)
 
 def radical_center(circ1, circ2, circ3):
     """Radical center of three circles.
@@ -1930,6 +1943,8 @@ class Triangle:
     def equal_detour_point(self):
         """Equal detour point of the triangle, also known as the X(176) triangle center.
         
+        :returns: A pair, the equal detour point and the detour.
+        
         """
         A = self.A
         B = self.B
@@ -2058,7 +2073,7 @@ class Affine:
         """Transform a point or several points by the affine map.
         
         :param m: a point or a two-column matrix of points, one point per row
-        :returns: a matrix or a vector
+        :returns: A matrix or a vector.
         
         """
         b = self.b
@@ -2070,6 +2085,7 @@ class Affine:
     def transform_line(self, line):
         """Transform a line by the affine map.
         
+        :returns: A `Line` object.
         
         """
         M = self.A
@@ -2237,6 +2253,8 @@ class Mobius:
 
     def inverse(self):
         """Inverse of the Möbius transformation.
+        
+        :returns: A Möbius transformation.
         
         """
         return Mobius(np.array([
@@ -2603,7 +2621,7 @@ class Projection:
         """Projection of a point.
         
         :param M: a point
-        :returns: a point on `D`, the projection of `M`
+        :returns: A point on `D`, the projection of `M`.
         
         """
         _ = error_if_not_point_(M=M)
@@ -2675,6 +2693,12 @@ class Rotation:
         print("     angle: ", self.theta, unit + s, "\n")
         
     def rotate(self, M):
+        """Rotate a point.
+        
+        :param m: a point
+        :returns: A point.
+        
+        """
         try:
             M = np.asarray(M, dtype=float)
         except:
@@ -2729,7 +2753,10 @@ class Rotation:
         return self.rotate_circle(circ)
 
     def rotate_ellipse(self, ell):
-        """
+        """Rotate an ellipse.
+        
+        :param ell: an `Ellipse` object
+        :returns: An `Ellipse` object.
         
         """
         if not isinstance(ell, Ellipse):
@@ -2754,6 +2781,9 @@ class Rotation:
     def rotate_line(self, line):
         """Rotate a line.
         
+        :param line: a `Line` object
+        :returns: A `Line` object.
+                
         """
         if not isinstance(line, Line):
             raise ValueError("`line` must be a `Line` object.")
