@@ -1,7 +1,10 @@
-from math import cos, sin, sqrt, atan2, pi, isinf
+from math import cos, sin, sqrt, atan2, pi, isinf, isclose
 import numpy as np
 from fractions import Fraction as Fr
 import numbers
+
+def approx_equal_(x, y):
+    return isclose(x, y) or isclose(x+1, y+1)
 
 def is_inf_(x):
     return isinstance(x, float) and isinf(x)

@@ -47,6 +47,7 @@ from .internal import (
     inversion_to_conjugate_mobius_,
     is_inf_,
     are_equal_,
+    approx_equal_, 
     mobius_from_three_points_to_zero_one_inf_
 )
 
@@ -128,6 +129,8 @@ class Line:
         do2 = line2.direction_offset()
         do1 = (do1["direction"], do1["offset"])
         do2 = (do2["direction"], do2["offset"])
+        if approx_equal_(do1["offset"], do2["offset"]):
+            return approx_equal_(do1["direction"] % pi, do2["direction"] % pi)
         return np.allclose(do1, do2)
     
     def is_parallel(self, line2):
@@ -367,7 +370,7 @@ class Circle:
         if not isinstance(circ2, Circle):
             raise ValueError("`circ2` is not a `Circle` object.")
         return (
-            isclose(self.radius, circ2.radius) and 
+            approx_equal_(self.radius, circ2.radius) and 
             np.allclose(self.center, circ2.center)
         )
         
@@ -383,7 +386,7 @@ class Circle:
         r = self.radius
         O = self.center
         d2 = dot_(P-O)
-        return isclose(d2, r*r)
+        return approx_equal_(d2, r*r)
 
     def contains(self, P):
         """Check whether a point is contained in the reference circle.
@@ -602,7 +605,7 @@ class Circle:
         d2 = dot_(self.center - circ2.center)
         r = self.radius
         r2 = circ2.radius
-        return isclose(d2, r*r + r2*r2)
+        return approx_equal_(d2, r*r + r2*r2)
     
     def angle(self, circ2):
         """Angle between the reference circle and a given circle, if they intersect.
@@ -1402,7 +1405,7 @@ class Ellipse:
 class Inversion:
     """Inversion class.
     
-    An inversion is initialized by its pole and its power.
+    An inversion is initialized by its pole and its power (a number, possibly negative).
     
     """
     def __init__(self, pole, power):
@@ -1458,6 +1461,19 @@ class Inversion:
         Ap = self.invert(A)
         Bp = self.invert(B)
         return Triangle(c0, Ap, Bp).circumcircle()
+      
+    def invert_gcircle(self, gcircle):
+        """Invert a generalized circle, that is, a circle or a line.
+        
+        :params gcircle`: a `Circle` object or a `Line` object
+        :returns: A `Circle` object or a `Line` object.
+        
+        """
+        if isinstance(gcircle, "Circle"):
+            return self.invert_circle(gcircle)
+        if isinstance(gcircle, "Line")
+            return self.invert_line(gcircle)
+        raise ValueError("`gcircle` must be a `Line` object or a `Circle` object.")
     
     def compose(self, iota2, left=True):
         """Compose the reference inversion with another inversion. The result 
