@@ -44,3 +44,4 @@ Plane geometry with Python.
 
 ![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/Circles_simultaneously_tangent.png)
 
+![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/MalfattiGaskets.png)

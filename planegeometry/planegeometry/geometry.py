@@ -129,8 +129,8 @@ class Line:
         do2 = line2.direction_offset()
         do1 = (do1["direction"], do1["offset"])
         do2 = (do2["direction"], do2["offset"])
-        if approx_equal_(do1["offset"], do2["offset"]):
-            return approx_equal_(do1["direction"] % pi, do2["direction"] % pi)
+        if approx_equal_(do1[1], do2[1]):
+            return approx_equal_(do1[0] % pi, do2[0] % pi)
         return np.allclose(do1, do2)
     
     def is_parallel(self, line2):
@@ -259,18 +259,18 @@ class Line:
         
         """
         _ = error_if_not_number_(alpha=alpha)
-        _ = error_if_not_point(O=O)
+        _ = error_if_not_point_(O=O)
         _ = error_if_not_boolean_(degrees=degrees)
         O = np.asarray(O, dtype=float)
         if degrees:
             alpha *= pi/180
         cosalpha, sinalpha = unit_vector_(alpha)
         x, y = self.A - O
-        RAt <- np.array([
+        RAt = np.array([
             cosalpha*x - sinalpha*y, sinalpha*x + cosalpha*y
         ])
         x, y = self.B - O
-        RBt <- np.array([
+        RBt = np.array([
             cosalpha*x - sinalpha*y, sinalpha*x + cosalpha*y
         ])
         return Line(RAt + O, RBt + O, self.extendA, self.extendB)
@@ -282,7 +282,7 @@ class Line:
         :returns: A `Line` object.
         
         """
-        _ = error_if_not_point(v=v)
+        _ = error_if_not_point_(v=v)
         v = np.asarray(v, dtype=float)
         return Line(self.A + v, self.B + v, self.extendA, self.extendB)
         
@@ -1035,7 +1035,7 @@ class Ellipse:
 
         """        
         _ = error_if_not_number_(t=t)
-        O = self.center
+        # O = self.center
         a = self.rmajor
         b = self.rminor
         alpha = self.alpha
@@ -1471,7 +1471,7 @@ class Inversion:
         """
         if isinstance(gcircle, "Circle"):
             return self.invert_circle(gcircle)
-        if isinstance(gcircle, "Line")
+        if isinstance(gcircle, "Line"):
             return self.invert_line(gcircle)
         raise ValueError("`gcircle` must be a `Line` object or a `Circle` object.")
     
@@ -1620,8 +1620,8 @@ def SteinerChain(c0, n, phi, shift):
     if not isinstance(n, int):
         raise ValueError("`n` must be an integer.")
     _ = error_if_not_positive_(n=n)
-    _ = error_if_not_number(phi=phi)
-    _ = error_if_not_number(shift=shift)
+    _ = error_if_not_number_(phi=phi)
+    _ = error_if_not_number_(shift=shift)
     circles = SteinerChain_phi0_(c0 = c0, n = n, shift = shift)
     R = c0.radius
     O = c0.center
