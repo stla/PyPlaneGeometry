@@ -10,7 +10,7 @@ circ = g.Circle((0,0), 3)
 depth = 5
 colors = sb.color_palette(palette="Set1", n_colors=depth)
 
-arcs = [circ.orthogonalThroughTwoPointsOnCircle(
+arcs = [circ.orthogonal_through_two_points_on_circle(
     Thetas0[i], Thetas0[(i+1) % 3], arc = True
 ) for i in range(3)]
   
@@ -65,7 +65,7 @@ for d in range(depth)[1:]:
     thetas.sort()
     for i in range(len(thetas)):
         ip1 = (i+1) % len(thetas)
-        arc = circ.orthogonalThroughTwoPointsOnCircle(
+        arc = circ.orthogonal_through_two_points_on_circle(
             thetas[i], thetas[ip1], arc = True
         )
         draw_arc(arc, colors[d])

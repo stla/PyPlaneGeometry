@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from math import pi, cos, sin, atan2
+from math import atan2
 from planegeometry.geometry import Circle, Inversion, Arc
 from planegeometry.internal import unit_vector_
 import numpy as np
@@ -9,7 +9,7 @@ import seaborn as sb
 def tessellation2(depth, Thetas0):
     circ = Circle((0,0), 3)
     arcs = [
-        circ.orthogonalThroughTwoPointsOnCircle(
+        circ.orthogonal_through_two_points_on_circle(
             Thetas0[i], Thetas0[(i+1) % 3], arc=True
         ) for i in [0, 1, 2]
     ]
@@ -55,7 +55,7 @@ def tessellation2(depth, Thetas0):
         thetas = np.sort(np.concatenate(Thetas[:d]))
         n = len(thetas)
         for i in range(n):
-            arc = circ.orthogonalThroughTwoPointsOnCircle(
+            arc = circ.orthogonal_through_two_points_on_circle(
                 thetas[i], thetas[(i+1) % n], arc = True
             )
             path1 = arc.path()

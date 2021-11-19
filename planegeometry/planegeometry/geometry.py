@@ -438,7 +438,7 @@ class Circle:
             alpha *= pi/180
         return self.center + self.radius * unit_vector_(alpha)
         
-    def orthogonalThroughTwoPointsWithinCircle(self, P1, P2, arc = False):
+    def orthogonal_through_two_points_in_circle(self, P1, P2, arc = False):
         """Orthogonal circle passing through two points within the reference circle.
         
         :param P1,P2: two distinct points in the interior of the reference circle
@@ -479,7 +479,7 @@ class Circle:
             )
         return Circle(O, distance_(O, P1))
     
-    def orthogonalThroughTwoPointsOnCircle(self, alpha1, alpha2, arc = False):
+    def orthogonal_through_two_points_on_circle(self, alpha1, alpha2, arc = False):
         """Orthogonal circle passing through two points on the reference circle.
         
         :param alpha1,alpha2: two angles defining two points on the reference circle
@@ -529,7 +529,7 @@ class Circle:
         """Radical center of two circles.
         
         :param circ2: a `Circle` object
-        :returns: the radical center of the reference circle and `circ2`.
+        :returns: The radical center of the reference circle and `circ2`.
         
         """
         if not isinstance(circ2, Circle):
@@ -558,7 +558,7 @@ class Circle:
         C2 = circ2.center
         if np.allclose(C1, C2):
             print("The two circles must have distinct centers.")
-            return
+            return None
         x, y = C2 - C1
         v = np.array([-y, x])
         R = self.radical_center(circ2)
@@ -566,7 +566,8 @@ class Circle:
     
     def as_ellipse(self):
         """Converts the circle to an `Ellipse` object.
- 
+        
+        :returns: An `Ellipse` object.
         
         """
         r = self.radius
@@ -735,6 +736,11 @@ def mid_circles(circ1, circ2):
 
 def intersection_circle_line(circ, line):
     """Intersection(s) of a circle and a line.
+    
+    :param circ: a `Circle` object
+    :param line: a `Line` object
+    :returns: `None` if the intersection is empty, otherwise either one point 
+    (the line is tangent to the circle) or a list of two points.
 
     """
     if not isinstance(circ, Circle):
@@ -789,6 +795,11 @@ def intersection_circle_circle(circ1, circ2):
 
 def intersection_ellipse_line(ell, line):
     """Intersection(s) of an ellipse and a line.
+
+    :param ell: an `Ellipse` object
+    :param line: a `Line` object
+    :returns: `None` if the intersection is empty, otherwise either one point 
+    (the line is tangent to the ellipse) or a list of two points.
 
     """
     if not isinstance(ell, Ellipse) and not isinstance(ell, Circle):
@@ -936,10 +947,14 @@ class Ellipse:
     def is_equal(self, ell2):
         """Check whether the reference ellipse equals another ellipse.
         
+        :param ell2: an `Ellipse` object
+        :returns: A Boolean value.        
         
         """
         if isinstance(ell2, Circle):
             ell2 = ell2.as_ellipse()
+        if not isinstance(ell2, Ellipse):
+            raise ValueError("`ell2` must be an `Ellipse` object or a `Circle` object.")
         x1, y1 = self.center
         alpha1 = self.alpha
         if not self.degrees:
@@ -2711,8 +2726,8 @@ class Rotation:
     def rotate(self, M):
         """Rotate a point.
         
-        :param m: a point
-        :returns: A point.
+        :param M: a point or a matrix of points
+        :returns: A point or a matrix of points.
         
         """
         try:
@@ -2842,4 +2857,103 @@ class Rotation:
         """
         M = self.get3x3matrix()
         return Affine(M[0:2, 0:2], M[0:2, 2])
+
+
+
+class Shear:
+    """A class for shear transformations. A shear is given by a vertex, two perpendicular vectors, and an angle.
+    
+    :param center: a point
+    :param theta: a number, the angle of the rotation
+    :param degrees: Boolean, whether the angle is given in degrees
+    
+    """
+    def __init__(self, vertex, vector, ratio, angle, degrees=True):
+        """
+        :param vertex: a point
+        :param vector: a vector
+        :param ratio: a positive number, the ratio between the length of 
+        `vector` and the length of the other vector, perpendicular to the 
+        first one
+        :param angle: an angle strictly between -90 degrees and 90 degrees
+        :param degrees: Boolean, whether `angle` is given in degrees
+        
+        """
+        _ = error_if_not_point_(vertex=vertex)
+        _ = error_if_not_point_(vector=vector)
+        _ = error_if_not_number_(ratio=ratio)
+        _ = error_if_not_positive_(ratio=ratio)
+        _ = error_if_not_number_(angle=angle)
+        _ = error_if_not_boolean_(degrees=degrees)
+        if degrees:
+            if angle <= -90 or angle >= 90:
+                raise ValueError("`angle` must be strictly between -90 degrees and 90 degrees.")
+        else:
+            if angle <= -pi/2 or angle >= pi/2:
+                raise ValueError("`angle` must be strictly between -90 degrees and 90 degrees.")            
+        self.vertex = np.asarray(vertex, dtype=float)
+        self.vector = np.asarray(vector, dtype=float)
+        self.ratio = ratio
+        self.angle = angle
+        self.degrees = degrees
+        
+    def __str__(self):
+        return str(self.__dict__)
+
+    def show(self):
+        unit = "degree" if self.degrees else "radian"
+        s = "" if self.angle == 1 or self.angle == 0 else "s"
+        r = self.ratio
+        v1x, v1y = self.vector
+        v2 = (-r * v1y, r * v1x)
+        print("Shear:\n")
+        print("        vertex: ", tuple(self.vertex), "\n")
+        print("  first vector: ", tuple(self.vector), "\n")
+        print(" second vector: ", v2, "\n")
+        print("         angle: ", self.angle, unit + s, "\n")
+        
+    def get3x3matrix(self):
+        """Get the augmented matrix of the shear.
+        
+        """
+        Q = self.vertex
+        w = self.vector
+        ratio = self.ratio
+        angle = self.angle
+        if self.degrees:
+            angle *= pi/180
+        wt = ratio * np.array([-w[1], w[0]])
+        z = np.array([[0], [0], [1]])
+        M1 = np.hstack((np.array([w, wt, Q]), z))
+        M2 = np.hstack((np.array([w, tan(angle)*w + wt, Q]), z))
+        M = np.matmul(np.linalg.solve(M1), M2)
+        M[:, 2] = M[2, :]
+        M[2, :] = np.array([0, 0, 1])
+        return M
+
+    def transform(self, M):
+        """Transform one or more points.
+        
+        :param M: a point or a matrix of points
+        :returns: A point or a matrix of points.
+        
+        """
+        try:
+            M = np.asarray(M, dtype=float)
+        except:
+            raise ValueError("Invalid `M` argument.")
+        M_is_point = False
+        if is_real_vector_(M):
+            M = M.reshape((1, 2))
+            M_is_point = True
+        else: 
+            if M.ndim != 2 or M.shape[1] != 2:
+                raise ValueError("`M` cannot be converted to a nx2 matrix.")
+        Mat = self.get3x3matrix()
+        A = np.vstack((np.transpose(M), np.ones((1, len(M)))))
+        out = np.transpose(np.matmul(Mat, A)[0:1, :])
+        if M_is_point:
+            out = out[0, :]
+        return out
+
 
