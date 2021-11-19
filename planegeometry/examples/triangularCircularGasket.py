@@ -270,7 +270,7 @@ depth2 = 4
 phi = 0.25
 shift = 0
 
-pltr = pv.Plotter(window_size = [512, 512], off_screen=True)
+pltr = pv.Plotter(window_size = [512, 512])
 pltr.set_background("#363940")
 pltr.set_focus([0,0,0])
 pltr.camera_position = "xy"
@@ -279,4 +279,4 @@ drawTriangularGasket(pltr, A, B, C, colors, depth)
 drawCircularGasket(pltr, mcircles["cA"], n1, depth2, phi, shift)
 drawCircularGasket(pltr, mcircles["cB"], n2, depth2, phi, shift)
 drawCircularGasket(pltr, mcircles["cC"], n3, depth2, phi, shift)
-pltr.show(screenshot="MalfattiGaskets.png")
+pltr.show()
