@@ -152,3 +152,8 @@ print(P-R)
 
 circ = g.Circle((2,3), 2)
 iota = g.Inversion((1,2), 3)
+
+print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+s = g.Shear((0,0),(1,0),1,45)
+print(s.transform((0,0)))
+    

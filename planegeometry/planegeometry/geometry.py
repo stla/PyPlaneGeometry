@@ -2926,7 +2926,7 @@ class Shear:
         z = np.array([[0], [0], [1]])
         M1 = np.hstack((np.array([w, wt, Q]), z))
         M2 = np.hstack((np.array([w, tan(angle)*w + wt, Q]), z))
-        M = np.matmul(np.linalg.solve(M1), M2)
+        M = np.matmul(np.linalg.inv(M1), M2)
         M[:, 2] = M[2, :]
         M[2, :] = np.array([0, 0, 1])
         return M
@@ -2951,9 +2951,15 @@ class Shear:
                 raise ValueError("`M` cannot be converted to a nx2 matrix.")
         Mat = self.get3x3matrix()
         A = np.vstack((np.transpose(M), np.ones((1, len(M)))))
-        out = np.transpose(np.matmul(Mat, A)[0:1, :])
+        out = np.transpose(np.matmul(Mat, A)[0:2, :])
         if M_is_point:
             out = out[0, :]
         return out
 
+    def as_affine(self):
+        """Convert the shear to an `Affine` object.
+        
+        """
+        M = self.get3x3matrix()
+        return Affine(M[0:2, 0:2], M[0:2, 2])
 
