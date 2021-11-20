@@ -407,9 +407,7 @@ class Circle:
         
         :param n_points: desired number of points
         :param where: either `"in"` or `"on"`
-        :returns: A matrix with `n_points` rows and two columns; each row is 
-        a random point inside the circle if `where="in"` or on the boundary of 
-        the circle if `where="on"`.
+        :returns: A matrix with `n_points` rows and two columns; each row is a random point inside the circle if `where="in"` or on the boundary of the circle if `where="on"`.
         
         """
         if not isinstance(n_points, int):
@@ -577,8 +575,7 @@ class Circle:
         """Intersection(s) of the reference circle with a line.
         
         :param line: a `Line` object
-        :returns: `None` (no intersection), a point (the line is tangent to 
-        the circle), or two points.
+        :returns: `None` (no intersection), a point (the line is tangent to the circle), or two points.
         
         """
         return intersection_circle_line(self, line)
@@ -587,8 +584,7 @@ class Circle:
         """Intersection(s) of the reference circle with another circle.
         
         :param circ2: a `Circle` object
-        :returns: `None` (no intersection), a point (the two circles are  
-        tangent), or two points.
+        :returns: `None` (no intersection), a point (the two circles are tangent), or two points.
         
         """
         return intersection_circle_circle(self, circ2)
@@ -672,8 +668,7 @@ def mid_circles(circ1, circ2):
     the two circles have equal radii.
 
     :param circ1,circ2: `Circle` objects
-    :returns: A `Circle` object, or a `Line` object, or a list of two such 
-    objects.
+    :returns: A `Circle` object, or a `Line` object, or a list of two such objects.
     
     """
     if not isinstance(circ1, Circle):
@@ -739,8 +734,7 @@ def intersection_circle_line(circ, line):
     
     :param circ: a `Circle` object
     :param line: a `Line` object
-    :returns: `None` if the intersection is empty, otherwise either one point 
-    (the line is tangent to the circle) or a list of two points.
+    :returns: `None` if the intersection is empty, otherwise either one point (the line is tangent to the circle) or a list of two points.
 
     """
     if not isinstance(circ, Circle):
@@ -760,9 +754,7 @@ def intersection_circle_circle(circ1, circ2):
     """Intersection(s) of two circles.
     
     :param circ1,circ2: `Circle` objects
-    :returns: A `Circle` object if the two circles are equal, `None` if the 
-    two circles do not intersect, a point if the two circles are tangent, or 
-    a list of two points.
+    :returns: A `Circle` object if the two circles are equal, `None` if the two circles do not intersect, a point if the two circles are tangent, or a list of two points.
 
     """
     if not isinstance(circ1, Circle):
@@ -798,8 +790,7 @@ def intersection_ellipse_line(ell, line):
 
     :param ell: an `Ellipse` object
     :param line: a `Line` object
-    :returns: `None` if the intersection is empty, otherwise either one point 
-    (the line is tangent to the ellipse) or a list of two points.
+    :returns: `None` if the intersection is empty, otherwise either one point (the line is tangent to the ellipse) or a list of two points.
 
     """
     if not isinstance(ell, Ellipse) and not isinstance(ell, Circle):
@@ -994,9 +985,7 @@ class Ellipse:
         
         :param n_points: desired number of points
         :param where: either `"in"` or `"on"`
-        :returns: A matrix with `n_points` rows and two columns; each row is 
-        a random point inside the ellipse if `where="in"` or on the boundary
-        of the ellipse if `where="on"`.
+        :returns: A matrix with `n_points` rows and two columns; each row is a random point inside the ellipse if `where="in"` or on the boundary of the ellipse if `where="on"`.
         
         """
         if not isinstance(n_points, int):
@@ -1043,10 +1032,8 @@ class Ellipse:
     def normal(self, t):
         """Normal unit vector to the ellipse.
     
-        :param t: a number, the eccentric angle in radians of the point of the
-        ellipse at which we want the normal unit vector
-        :returns: The normal unit vector to the ellipse at the point given by
-        eccentric angle `t`.
+        :param t: a number, the eccentric angle in radians of the point of the ellipse at which we want the normal unit vector
+        :returns: The normal unit vector to the ellipse at the point given by eccentric angle `t`.
 
         """        
         _ = error_if_not_number_(t=t)
@@ -1137,12 +1124,9 @@ class Ellipse:
     def theta2t(self, theta, degrees=True):
         """Convert angle to eccentric angle.
         
-        :param theta: angle between the major axis and the half-line starting
-        at the center of the ellipse and passing through the point of interest
-        on the ellipse
+        :param theta: angle between the major axis and the half-line starting at the center of the ellipse and passing through the point of interest on the ellipse
         :param degrees: Boolean, whether `theta` is given in degrees
-        :returns: The eccentric angle of the point of interest on the ellipse,
-        in radians.
+        :returns: The eccentric angle of the point of interest on the ellipse, in radians.
         
         """
         _ = error_if_not_number_(theta=theta)
@@ -1495,8 +1479,7 @@ class Inversion:
         is a Möbius transformation.
         
         :param iota2: an `Inversion` object
-        :param left: Boolean, whether to compose at left or at right (i.e.
-        returns `iota2 o iota1` or `iota1 o iota2`)
+        :param left: Boolean, whether to compose at left or at right (i.e. returns `iota2 o iota1` or `iota1 o iota2`)
         :returns: A `Mobius` object.
         
         """
@@ -2033,9 +2016,7 @@ class Triangle:
         
         :param n_points: desired number of points
         :param where: either `"in"` or `"on"`
-        :returns: A matrix with `n_points` rows and two columns; each row is 
-        a random point inside the triangle if `where="in"` or on the boundary 
-        of the triangle if `where="on"`.
+        :returns: A matrix with `n_points` rows and two columns; each row is a random point inside the triangle if `where="in"` or on the boundary of the triangle if `where="on"`.
         
         """
         if not isinstance(n_points, int):
