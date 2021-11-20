@@ -157,3 +157,6 @@ print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 s = g.Shear((0,0),(1,0),1,45)
 print(s.transform((0,0)))
     
+print("oooooooooooooooooooooooooooooooooooooooo")
+s = g.ScalingXY((1,1),4,2)
+print(s.transform((3,4)))

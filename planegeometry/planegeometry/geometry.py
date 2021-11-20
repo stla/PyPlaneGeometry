@@ -2963,3 +2963,72 @@ class Shear:
         M = self.get3x3matrix()
         return Affine(M[0:2, 0:2], M[0:2, 2])
 
+
+class ScalingXY:
+    """A class for axis-scalings. An axis-scaling is given by a center, and 
+    two scale factors `sx` and `sy`, one for the x-axis and one for the y-axis.
+    
+    """
+    def __init__(self, center, sx, sy):
+        """
+        :param center: a point
+        :param sx: a number
+        :param sy: a number
+        
+        """
+        _ = error_if_not_point_(center=center)
+        _ = error_if_not_number_(sx=sx)
+        _ = error_if_not_number_(sy=sy)
+        self.center = np.asarray(center, dtype=float)
+        self.sx = sx
+        self.sy = sy
+        
+    def __str__(self):
+        return str(self.__dict__)
+
+    def show(self):
+        print("Axis scaling:\n")
+        print("              center: ", tuple(self.center), "\n")
+        print(" scale factor x-axis: ", self.sx, "\n")
+        print(" scale factor y-axis: ", self.sy, "\n")
+
+    def transform(self, M):
+        """Transform one or more points.
+        
+        :param M: a point or a matrix of points
+        :returns: A point or a matrix of points.
+        
+        """
+        try:
+            M = np.asarray(M, dtype=float)
+        except:
+            raise ValueError("Invalid `M` argument.")
+        M_is_point = False
+        if is_real_vector_(M):
+            M = M.reshape((1, 2))
+            M_is_point = True
+        else: 
+            if M.ndim != 2 or M.shape[1] != 2:
+                raise ValueError("`M` cannot be converted to a nx2 matrix.")
+        O = self.center
+        f = np.array([self.sx, self.sy])
+        out = f * (M - O) + O
+        if M_is_point:
+            out = out[0, :]
+        return out
+    
+    def get3x3matrix(self):
+        """Get the augmented matrix of the axes-scaling.
+        
+        """
+        D = np.diag((self.sx, self.sy))
+        A = np.vstack((D, np.array([0.0, 0.0])))
+        x, y = self.transform((0, 0))
+        return np.hstack((A, np.array([[x], [y], [1]])))
+
+    def as_affine(self):
+        """Converting to an `Affine` object.
+        
+        """
+        M = self.get3x3matrix()
+        return Affine(M[0:2, 0:2], M[0:2, 2])
