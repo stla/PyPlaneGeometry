@@ -54,6 +54,12 @@ def error_if_not_point_(**kwargs):
         raise ValueError("`%s` is not a point." % key)
     return
 
+def error_if_not_vector_(**kwargs):
+    key = list(kwargs.keys())[0]
+    P = kwargs[key]
+    if not is_point_(P):
+        raise ValueError("`%s` is not a vector." % key)
+    return
 
 def farey_(n):
     return [Fr(0, 1)] + sorted(

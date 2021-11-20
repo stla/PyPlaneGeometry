@@ -8,7 +8,6 @@ from math import (
     sin, 
     pi, 
     inf, 
-    isinf, 
     isclose,
     atan
 )
@@ -34,6 +33,7 @@ from .internal import (
     is_vector_, 
     is_real_vector_, 
     error_if_not_point_,
+    error_if_not_vector_,
     error_if_not_number_,
     error_if_not_positive_,
     error_if_not_boolean_,
@@ -46,7 +46,6 @@ from .internal import (
     ellipse_from_center_and_eigen_,
     inversion_to_conjugate_mobius_,
     is_inf_,
-    are_equal_,
     approx_equal_, 
     mobius_from_three_points_to_zero_one_inf_
 )
@@ -3105,3 +3104,140 @@ class Homothety:
         M = self.get3x3matrix()
         return Affine(M[0:2, 0:2], M[0:2, 2])
     
+
+class Scaling:
+    """A class representing a (non-uniform) scaling. A non-uniform scaling is given by a center, a direction vector, and a scale factor.
+    
+    :Example:
+        
+    >>> Q = np.array([1,1]); w = np.array([1,3]); s = 2
+    >>> scaling = Scaling(Q, w, s)
+    >>> # the center is mapped to itself:
+    >>> scaling.transform(Q)
+    >>> # any vector `u` parallel to the direction vector is mapped to `s*u`:
+    >>> u = 3*w
+    >>> np.equal(s*u, S.transform(u) - S.transform((0,0)))
+    >>> # any vector perpendicular to the direction vector is mapped to itself:
+    >>> wt = 3 * np.array([-w[1], w[0]])
+    >>> np.equal(wt, S.transform(wt) - S.transform((0,0)))
+
+    """
+    def __init__(self, center, direction, scale):
+        """
+        :param center: a point
+        :param direction: a vector
+        :param scale: a number
+        
+        """
+        _ = error_if_not_point_(center=center)
+        _ = error_if_not_vector_(direction=direction)
+        _ = error_if_not_number_(scale=scale)
+        self.center = np.asarray(center, dtype=float)
+        self.direction = np.asarray(direction, dtype=float)
+        self.scale = scale
+        
+    def __str__(self):
+        return str(self.__dict__)
+
+    def show(self):
+        print("Scaling:\n")
+        print("     center: ", tuple(self.center), "\n")
+        print("  direction: ", tuple(self.direction), "\n")
+        print("      scale: ", self.scale, "\n")
+        
+    def get3x3matrix(self):
+        """Get the augmented matrix of the scaling.
+        
+        """
+        Q = self.center
+        w = self.direction
+        s = self.scale
+        w1, w2 = w
+        v = np.array([-w2, w1])
+        u = np.array([[0.0], [0.0], [1.0]])
+        M1 = np.hstack((np.vstack((w, v, Q)), u))
+        M2 = np.hstack((np.vstack((s*w, v, Q)), u))
+        M = np.matmul(np.linalg.inv(M1), M2)
+        M[:, 2] = M[2, :]
+        M[2, :] = np.array([0.0, 0.0, 1.0])
+        return M
+
+        
+    def transform(self, M):
+        """Transform one or more points.
+        
+        :param M: a point or a matrix of points
+        :returns: A point or a matrix of points.
+        
+        """
+        try:
+            M = np.asarray(M, dtype=float)
+        except:
+            raise ValueError("Invalid `M` argument.")
+        M_is_point = False
+        if is_real_vector_(M):
+            M = M.reshape((1, 2))
+            M_is_point = True
+        else: 
+            if M.ndim != 2 or M.shape[1] != 2:
+                raise ValueError("`M` cannot be converted to a nx2 matrix.")
+        Q = self.center
+        w = self.direction
+        s = self.scale
+        wQ = -Q
+        theta = - atan2(w[1], w[0])
+        M = M + wQ
+        costheta = cos(theta)
+        sintheta = sin(theta)
+        M = np.column_stack(
+            (
+                costheta*M[:, 0] - sintheta*M[:, 1], 
+                sintheta*M[:, 0] + costheta*M[:, 1]
+            )
+        )
+        M = np.column_stack((s * M[:, 0], M[:, 1]))
+        sintheta = -sintheta
+        M = np.column_stack(
+            (
+                costheta*M[:, 0] - sintheta*M[:, 1], 
+                sintheta*M[:, 0] + costheta*M[:, 1]
+            )
+        )
+        out = M - wQ
+        if M_is_point:
+            out = out[0, :]
+        return out
+
+    def as_affine(self):
+        """Converting to an `Affine` object.
+        
+        """
+        M = self.get3x3matrix()
+        return Affine(M[0:2, 0:2], M[0:2, 2])
+
+    def scale_circle(self, circ):
+        """Scale a circle. The result is an ellipse.
+        
+        :param circ: a `Circle` object
+        :returns: An `Ellipse` object.
+        
+        """
+        if not isinstance(circ, Circle):
+            raise ValueError("`circ` must be a `Circle` object.")
+        w = self.direction
+        C = circ.center
+        R = circ.radius
+        O = self.transform(C)
+        lw = vlength_(w)
+        A1 = self.transform(C + R*w/lw)
+        wt = np.array([-w[1], w[0]])
+        A2 = self.transform(C + R*wt/lw)
+        if self.scale >= 1:
+            r1 = distance_(A1, O)
+            r2 = distance_(A2, O)
+            alpha = atan2(A1[1]-O[1], A1[0]-O[0]) * 180/pi
+        else:
+            r1 = distance_(A2, O)
+            r2 = distance_(A1, O)
+            alpha = atan2(A2[1]-O[1], A2[0]-O[0]) * 180/pi
+        return Ellipse(O, r1, r2, alpha, degrees=True)
