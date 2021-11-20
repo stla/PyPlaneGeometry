@@ -1,4 +1,4 @@
-from math import sqrt, inf, copysign, acos, cos, sin
+from math import sqrt, inf, copysign, acos
 from functools import reduce
 import cmath
 import planegeometry.geometry as g

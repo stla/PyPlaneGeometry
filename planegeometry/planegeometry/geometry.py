@@ -2863,10 +2863,25 @@ class Rotation:
 class Shear:
     """A class for shear transformations. A shear is given by a vertex, two perpendicular vectors, and an angle.
     
-    :param center: a point
-    :param theta: a number, the angle of the rotation
-    :param degrees: Boolean, whether the angle is given in degrees
-    
+    :Example:
+        
+    >>> P = np.array([0,0]); w = np.array([1,0]); ratio = 1; angle = 45
+    >>> shear = Shear(P, w, ratio, angle)
+    >>> wt = ratio * np.array([-w[1], w[0]])
+    >>> Q = P + w; R = Q + wt; S = P + wt
+    >>> A = shear.transform(P); B = shear.transform(Q)
+    >>> C = shear.transform(R); D = shear.transform(S)
+    >>> import matplotlib.pyplot as plt
+    >>> figure, axes = plt.subplots(figsize=(10, 10))
+    >>> axes.set_aspect(1)
+    >>> unit_square = plt.Polygon([P,Q,R,S], fill=False)
+    >>> axes.add_artist(unit_square)
+    >>> image = plt.Polygon([A,B,C,D], fill=False, color="red")
+    >>> axes.add_artist(image)
+    >>> plt.xlim(0, 1)
+    >>> plt.ylim(0, 2)
+    >>> plt.show()
+
     """
     def __init__(self, vertex, vector, ratio, angle, degrees=True):
         """
@@ -3032,3 +3047,78 @@ class ScalingXY:
         """
         M = self.get3x3matrix()
         return Affine(M[0:2, 0:2], M[0:2, 2])
+
+
+class Homothety:
+    """A homothety is given by a center and a scale factor.
+    
+    """
+    def __init__(self, center, scale):
+        """
+        :param center: a point
+        :param scale: a number
+        
+        """
+        _ = error_if_not_point_(center=center)
+        _ = error_if_not_number_(scale=scale)
+        self.center = np.asarray(center, dtype=float)
+        self.scale = scale
+        
+    def __str__(self):
+        return str(self.__dict__)
+
+    def show(self):
+        print("Homothety:\n")
+        print("     center: ", tuple(self.center), "\n")
+        print("      scale: ", self.scale, "\n")
+
+    def transform(self, M):
+        """Transform one or more points.
+        
+        :param M: a point or a matrix of points
+        :returns: A point or a matrix of points.
+        
+        """
+        try:
+            M = np.asarray(M, dtype=float)
+        except:
+            raise ValueError("Invalid `M` argument.")
+        M_is_point = False
+        if is_real_vector_(M):
+            M = M.reshape((1, 2))
+            M_is_point = True
+        else: 
+            if M.ndim != 2 or M.shape[1] != 2:
+                raise ValueError("`M` cannot be converted to a nx2 matrix.")
+        s = self.scale
+        out = (1-s) * self.center + s * M
+        if M_is_point:
+            out = out[0, :]
+        return out
+    
+    def transform_circle(self, circ):
+        """Transform a circle by the homothety.
+        
+        :param circ: a `Circle` object
+        :returns: A `Circle` object.
+
+        """
+        return Circle(self.transform(circ.center), abs(self.scale)*circ.radius)
+    
+    def get3x3matrix(self):
+        """Get the augmented matrix of the homothety.
+
+        """
+        s = self.scale
+        D = np.diag((s, s))
+        A = np.vstack((D, np.array([0.0, 0.0])))
+        x, y = (1-s) * self.center
+        return np.hstack((A, np.array([[x], [y], [1]])))
+
+    def as_affine(self):
+        """Converting to an `Affine` object.
+        
+        """
+        M = self.get3x3matrix()
+        return Affine(M[0:2, 0:2], M[0:2, 2])
+    

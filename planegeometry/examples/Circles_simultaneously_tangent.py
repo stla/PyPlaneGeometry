@@ -8,7 +8,6 @@ from planegeometry.geometry import (
     intersection_circle_circle, 
     intersection_line_line,
     circleAB)
-import numpy as np
 
 
 C1 = Circle((0,0), 2)
