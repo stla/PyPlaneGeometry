@@ -3103,6 +3103,8 @@ class Homothety:
         :returns: A `Circle` object.
 
         """
+        if not isinstance(circ, Circle):
+            raise ValueError("`circ` must be a `Circle` object.")
         return Circle(self.transform(circ.center), abs(self.scale)*circ.radius)
     
     def get3x3matrix(self):
