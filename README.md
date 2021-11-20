@@ -1,5 +1,10 @@
 # PyPlaneGeometry
 
+<!-- badges: start -->
+[![Documentation status](https://readthedocs.org/projects/pyplanegeometry/badge/)](http://pyplanegeometry.readthedocs.io)
+<!-- badges: end -->
+
+
 Plane geometry with Python.
 
 ![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/triangularApollonianGasket.png)
