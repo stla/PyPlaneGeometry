@@ -2347,6 +2347,34 @@ class Mobius:
         condition = c != 0 and z == -d/c
         return inf if condition else from_complex_((a*z+b)/(c*z+d))
     
+    
+    def fixed_points(self):
+        """Fixed points of the Möbius transformation.
+        
+        :returns: One point, or a list of two points, or a message in the case when the transformation is the identity map.
+        
+        """
+        a = self.a
+        b = self.b
+        c = self.c
+        d = self.d
+        M_is_identity = (a == d) and b == 0 and c == 0
+        if M_is_identity:
+            print("This Möbius transformation is the identity map, every point is a fixed point.")
+            return None
+        if c == 0:
+            if a == d:
+              return inf
+            return from_complex_(-b / (a-d))
+        Delta = (a-d)**2 + 4*b*c
+        if Delta == 0:
+            return from_complex_((a-d)/2/c)
+        return [
+            from_complex_((a-d + sqrt(Delta))/2/c),
+            from_complex_((a-d - sqrt(Delta))/2/c)            
+        ]
+
+    
     def transform_circle(self, circ):
         """Transform a circle by the Möbius transformation.
         
@@ -2464,6 +2492,46 @@ class Mobius:
         M2 = mobius_from_three_points_to_zero_one_inf_(w1, w2, w3)
         Mob2 = Mobius(M2)
         return Mob1.compose(Mob2.inverse())
+
+    @classmethod
+    def from_mapping_one_circle(cls, circ1, circ2):
+        """Returns a Möbius transformation which maps a given circle to another given circle.
+        
+        :params circ1,circ2: two `Circle`objects
+        
+        """
+        if not isinstance(circ1, Circle):
+            raise ValueError("`circ1` must be a `Circle` object.")
+        if not isinstance(circ2, Circle):
+            raise ValueError("`circ2` must be a `Circle` object.")
+        z1 = complex(*circ1.point_from_angle(0))
+        z2 = complex(*circ1.point_from_angle(90, degrees=True))
+        z3 = complex(*circ1.point_from_angle(270, degrees=True))
+        MT1 = Mobius([[z2-z3, -z1*(z2-z3)], [z2-z1, -z3*(z2-z1)]])
+        z1 = complex(*circ2.point_from_angle(180, degrees=True))
+        z2 = complex(*circ2.point_from_angle(90, degrees=True))
+        z3 = complex(*circ2.point_from_angle(270, degrees=True))
+        MT2 = Mobius([[z2-z3, -z1*(z2-z3)], [z2-z1, -z3*(z2-z1)]])
+        return MT1.compose(MT2.inverse())
+    
+def cross_ratio(A, B, C, D):
+    """Cross ratio of four points. 
+    
+    :param A,B,C,D: four distinct points
+    :returns: A complex number. It is real if and only if the four points lie on a generalized circle (that is a circle or a line).
+    
+    """
+    _ = error_if_not_point_(A=A)
+    _ = error_if_not_point_(B=B)
+    _ = error_if_not_point_(C=C)
+    _ = error_if_not_point_(D=D)
+    z1 = complex(*A)
+    z2 = complex(*B)
+    z3 = complex(*C)
+    z4 = complex(*D)
+    if len(np.unique([z1, z2, z3, z4])) < 4:
+        raise ValueError("The four points must be distinct.")
+    return (z1-z4)/(z1-z2)*(z3-z2)/(z3-z4)
 
 
 def unimodular_matrices(n):

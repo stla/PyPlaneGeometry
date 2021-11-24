@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from planegeometry.geometry import Mobius, Circle, Triangle, Line
-from numpy import allclose, array_equal
+from numpy import allclose
 
 def test_image_circle():
     circ = Circle((2, 3), 4)
