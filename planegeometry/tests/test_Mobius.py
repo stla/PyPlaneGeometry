@@ -57,6 +57,12 @@ def test_mapping_three_points():
     assert allclose(Q2, R2)
     assert allclose(Q3, R3)
 
+def test_mapping_one_circle():
+    circ1 = Circle((2, 3), 4)
+    circ2 = Circle((4, 3), 5)
+    mob = Mobius.from_mapping_one_circle(circ1, circ2)
+    circ3 = mob.transform_circle(circ1)
+    assert circ2.is_equal(circ3)
 
 def test_generalized_power():
     # case 1 : diag(c(lambda,lambda))
