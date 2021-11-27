@@ -999,7 +999,11 @@ class Ellipse:
         raise ValueError("The `where` argument must be `'in'` or `'on'`.")
     
     def point_from_angle(self, theta, degrees=True):
-        """
+        """Point on the ellipse with given eccentric angle.
+        
+        :param theta: eccentric angle
+        :param degrees: Boolean, whether `theta` is given in degrees
+        :returns: A point on the ellipse.
         
         """
         _ = error_if_not_boolean_(degrees=degrees)
@@ -1136,9 +1140,37 @@ class Ellipse:
         sgn = 1 if theta_mod_2pi < sepsilon_ else -1
         theta_eps = theta + sgn*sepsilon_
         return atan2(self.rmajor/self.rminor, 1/tan(theta_mod_2pi)) + theta_eps - theta_eps % pi
+    
+    def diameter(self, t, conjugate=False):
+        """Diameter of the ellipse.
+        
+        :param t: eccentric angle; for `t=0`, the diameter is the major axis
+        :param conjugate: Boolean, whether to return the conjugate diameter as well
+        :returns: A `Line` object or a list of two `Line` objects if `conjugate=True`.
+        
+        """
+        _ = error_if_not_number_(t=t)
+        _ = error_if_not_boolean_(conjugate=conjugate)
+        center = self.center
+        alpha = self.alpha
+        if self.degrees:
+            alpha *= pi / 180
+        ts = [t, t + pi]
+        if conjugate:
+            ts = ts + [t+pi/2, t-pi/2]
+        pts = ellipse_points_(
+            ts, center, self.rmajor, self.rminor, alpha    
+        )
+        l = Line(pts[0], pts[1], False, False)
+        if conjugate:
+            l = [l, Line(pts[2], pts[3], False, False)]
+        return l
 
     def intersection_with_line(self, line):
-        """
+        """Intersection of the ellipse and a line.
+        
+        :param line: a `Line` object
+        :returns: The intersection, it can be `None`, one point, or a list of two points.
         
         """
         return intersection_ellipse_line(self, line)
@@ -1224,7 +1256,11 @@ class Ellipse:
     
     @classmethod
     def from_center_and_matrix(cls, center, S):
-        """
+        """Ellipse from its center and its shape matrix.
+        
+        :param center: a point
+        :param S: a 2x2 symmetric matrix
+        :returns: An `Ellipse` object.
         
         """
         _ = error_if_not_point_(center=center)
