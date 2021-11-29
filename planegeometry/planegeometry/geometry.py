@@ -151,6 +151,20 @@ class Line:
         dy2 = Q1[1] - Q2[1]
         D = det2x2_((dx1, dy1), (dx2, dy2))
         return abs(D) < sepsilon_
+
+    def is_perpendicular(self, line2):
+        """Check whether the reference line is perpendicular to another line.
+
+        :param line2: a `Line` object
+        :returns: A Boolean value.
+        
+        """
+        if not isinstance(line2, Line):
+            raise ValueError("`line2` is not a `Line` object.")
+        AB = self.B - self.A
+        CD = line2.B - line2.A
+        return approx_equal_(np.vdot(AB, CD), 0)
+
     
     def includes(self, M, strict = False, checkCollinear = True):
         """Check whether a point belongs to the line.
@@ -459,7 +473,7 @@ class Circle:
             raise ValueError("`P2` is not in the interior of the reference circle.")
         if collinear_(I, P1, P2):
             return Line(P1, P2, not arc, not arc)
-        iota = Inversion.fro(I, r2)
+        iota = Inversion(I, r2)
         P1prime = iota.invert(P1)
         P2prime = iota.invert(P2)
         line1 = Line(P1, P1prime)

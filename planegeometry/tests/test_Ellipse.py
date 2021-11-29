@@ -1,4 +1,6 @@
+from math import pi
 from planegeometry.geometry import Ellipse, Affine
+from planegeometry.internal import distance_, approx_equal_
 import numpy as np
 
 def test_ellipse_equation():
@@ -46,4 +48,10 @@ def test_ellipse_matrix():
     ell2 = Ellipse.from_center_and_matrix((2, 3), S)
     assert ell.is_equal(ell2)
 
-
+def test_ellipse_diameter():
+    ell = Ellipse((2, 3), 5, 4, 50)
+    majorAxis = ell.diameter(0)
+    minorAxis = ell.diameter(pi/2)
+    assert majorAxis.is_perpendicular(minorAxis)
+    assert approx_equal_(distance_(majorAxis.A, majorAxis.B), 10)
+    assert approx_equal_(distance_(minorAxis.A, minorAxis.B), 8)
