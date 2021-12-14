@@ -5,7 +5,9 @@
 <!-- badges: end -->
 
 
-Plane geometry with Python.
+Plane geometry with Python. This library is a Python translation of my R 
+package [PlaneGeometry](https://github.com/stla/PlaneGeometry) but it contains 
+less features so far. Do not hesitate to encourage me if you are interested.
 
 ![](https://github.com/stla/PyPlaneGeometry/raw/main/planegeometry/examples/triangularApollonianGasket.png)
 

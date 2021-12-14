@@ -642,7 +642,7 @@ class Circle:
         return acos(cos_theta)
 
 def circleAB(A, B):
-    """Circle with diameter AB.
+    """Circle with diameter `AB`.
     
     :param A,B: two distinct points
     :returns: A `Circle` object.
@@ -655,6 +655,22 @@ def circleAB(A, B):
     if np.allclose(A, B):
         raise ValueError("`A` and `B` are not distinct.")
     return Circle((A+B)/2, distance_(A, B)/2)
+
+def circleOA(O, A):
+    """Circle with center `O` and passing through `A`.
+    
+    :param O,A: two distinct points
+    :returns: A `Circle` object.
+    
+    """
+    _ = error_if_not_point_(A=A)
+    _ = error_if_not_point_(O=O)
+    A = np.asarray(A, dtype=float)
+    O = np.asarray(O, dtype=float)
+    if np.allclose(O, A):
+        raise ValueError("`O` and `A` are not distinct.")
+    return Circle(O, distance_(O, A))
+
 
 def radical_center(circ1, circ2, circ3):
     """Radical center of three circles.
