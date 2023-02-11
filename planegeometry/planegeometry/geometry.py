@@ -302,7 +302,7 @@ class Line:
     def invert(self, iota):
         """Invert the reference line.
         
-        :param iota: an `Inversion.fro` object
+        :param iota: an `Inversion` object
         :returns: A `Line` object or a `Circle` object.
         
         """
@@ -452,7 +452,8 @@ class Circle:
     def orthogonal_through_two_points_in_circle(self, P1, P2, arc = False):
         """Orthogonal circle passing through two points within the reference circle.
         
-        :param P1,P2: two distinct points in the interior of the reference circle
+        :param P1: a point in the interior of the reference circle
+        :param P2: another point in the interior of the reference circle
         :param arc: Boolean, whether to return the arc joining the two points instead of the circle
         :returns: A `Circle` object or an `Arc` object, or a `Line` object if the two points are on a diameter.
 
@@ -493,7 +494,8 @@ class Circle:
     def orthogonal_through_two_points_on_circle(self, alpha1, alpha2, arc = False):
         """Orthogonal circle passing through two points on the reference circle.
         
-        :param alpha1,alpha2: two angles defining two points on the reference circle
+        :param alpha1: an angle defining a point on the reference circle
+        :param alpha2: another angle defining a point on the reference circle
         :param arc: Boolean, whether to return only the arc at the interior of the reference circle
         :returns: A `Circle` object if `arc=False`, an `Arc` object if `arc=True, or a `Line` object: the diameter of the reference circle defined by the two points in case when the two angles differ by `pi`.
 
@@ -675,7 +677,9 @@ def circleOA(O, A):
 def radical_center(circ1, circ2, circ3):
     """Radical center of three circles.
     
-    :param circ1,circ2,circ3: `Circle` objects
+    :param circ1: a `Circle` object
+    :param circ2: a `Circle` object
+    :param circ3: a `Circle` object
     :returns: A point, the radical center of the three circles.
     
     """
@@ -696,7 +700,8 @@ def mid_circles(circ1, circ2):
     this circle swaps the two circles. The case of a line appears only when 
     the two circles have equal radii.
 
-    :param circ1,circ2: `Circle` objects
+    :param circ1: a `Circle` object
+    :param circ2: a `Circle` object
     :returns: A `Circle` object, or a `Line` object, or a list of two such objects.
     
     """
@@ -782,7 +787,8 @@ def intersection_circle_line(circ, line):
 def intersection_circle_circle(circ1, circ2):
     """Intersection(s) of two circles.
     
-    :param circ1,circ2: `Circle` objects
+    :param circ1: a `Circle` object
+    :param circ2: a `Circle` object
     :returns: A `Circle` object if the two circles are equal, `None` if the two circles do not intersect, a point if the two circles are tangent, or a list of two points.
 
     """
@@ -1209,7 +1215,12 @@ class Ellipse:
     def from_equation(cls, A, B, C, D, E, F):
         """Ellipse from its implicit equation.
         
-        :param A,B,C,D,E,F: coefficients of the implicit equation of the ellipse
+        :param A: coefficient of the implicit equation of the ellipse
+        :param B: coefficient of the implicit equation of the ellipse
+        :param C: coefficient of the implicit equation of the ellipse
+        :param D: coefficient of the implicit equation of the ellipse
+        :param E: coefficient of the implicit equation of the ellipse
+        :param F: coefficient of the implicit equation of the ellipse
         :returns: An `Ellipse` object.
         
         """
@@ -1235,7 +1246,11 @@ class Ellipse:
         `Ax² + Bxy + Cy² + Dx + Ey + F = 0`. This function returns
         A, B, C, D, E and F.
         
-        :param P1,P2,P3,P4,P5: five points
+        :param P1: a point
+        :param P2: another point
+        :param P3: another point
+        :param P4: another point
+        :param P5: another point
         :returns: A dictionary giving A, B, C, D, E and F.
         
         """
@@ -1276,7 +1291,11 @@ class Ellipse:
     def from_five_points(cls, P1, P2, P3, P4, P5):
         """Ellipse from five points on this ellipse.
         
-        :param P1,P2,P3,P4,P5: five points
+        :param P1: a point
+        :param P2: another point
+        :param P3: another point
+        :param P4: another point
+        :param P5: another point
         :returns: An `Ellipse` object.
         
         """
@@ -1573,7 +1592,8 @@ class Inversion:
     def from_swapping_two_circles(cls, circ1, circ2, positive=True):
         """Inversion swapping two circles.
         
-        :param circ1,circ2: `Circle` objects
+        :param circ1: a `Circle` object
+        :param circ2: a `Circle` object
         :param positive: Boolean, whether the sign of the desired inversion power must be positive or negative
         :returns: An `Inversion` object, which maps `circ1` to `circ2` and `circ2` to `circ1`, except in the case when `circ1` and `circ2` are congruent and tangent: in this case a `Reflection` object is returned (a reflection is an inversion on a line).
         
@@ -1632,7 +1652,8 @@ class Inversion:
     def from_fixing_two_circles(cls, circ1, circ2):
         """Inversion fixing two circles.
         
-        :param circ1,circ2: `Circle` objects
+        :param circ1: a `Circle` object
+        :param circ2: a `Circle` object
         :returns: An `Inversion` object representing an inversion which leaves each of the two circles invariant.
         
         """
@@ -1647,7 +1668,9 @@ class Inversion:
     def from_fixing_three_circles(cls, circ1, circ2, circ3):
         """Inversion fixing three circles.
         
-        :param circ1,circ2,circ3: `Circle` objects
+        :param circ1: a `Circle` object
+        :param circ2: a `Circle` object
+        :param circ3: a `Circle` object
         :returns: An `Inversion` object representing an inversion which leaves each of the three circles invariant.
         
         """
@@ -2215,8 +2238,12 @@ class Affine:
     def from_mapping_three_points(cls, P1, P2, P3, Q1, Q2, Q3):
         """Affine transformation mapping three given points to three given points.
         
-        :param P1,P2,P3: three non-collinear points
-        :param Q1,Q2,Q3: three non-collinear points
+        :param P1: a point
+        :param P2: another point
+        :param P3: another point; the three points must be non-collinear
+        :param Q1: a point
+        :param Q2: another point
+        :param Q3: another point; the three points must be non-collinear
         :returns: An `Affine` object representing the transformation which maps Pi to Qi for each i=1,2,3.
         
         """
@@ -2246,7 +2273,8 @@ class Affine:
     def from_ellipse_to_ellipse(cls, ell1, ell2):
         """Affine transformation mapping a given ellipse to a given ellipse.
         
-        :param ell1,ell2: `Ellipse` or `Circle` objects
+        :param ell1: `Ellipse` or `Circle` object
+        :param ell2: `Ellipse` or `Circle` object
         :returns: An `Affine` object representing the transformation which maps `ell1` to `ell2`.
         
         """
@@ -2512,8 +2540,12 @@ class Mobius:
     def from_mapping_three_points(cls, P1, P2, P3, Q1, Q2, Q3):
         """Möbius transformation mapping three given points to three given points.
         
-        :param P1,P2,P3: three distinct points, `inf` allowed
-        :param Q1,Q2,Q3: three distinct points, `inf` allowed
+        :param P1: a point, `inf` allowed
+        :param P2: another point, `inf` allowed
+        :param P3: another point, `inf` allowed
+        :param Q1: a point, `inf` allowed
+        :param Q2: another point, `inf` allowed
+        :param Q3: another point, `inf` allowed
         :returns: A `Mobius` object, representing the Möbius transformation which sends `Pi` to `Qi` for each i=1,2,3.
             
         """
@@ -2563,7 +2595,8 @@ class Mobius:
     def from_mapping_one_circle(cls, circ1, circ2):
         """Returns a Möbius transformation which maps a given circle to another given circle.
         
-        :params circ1,circ2: two `Circle`objects
+        :param circ1: a `Circle`object
+        :param circ2: a `Circle`object
         
         """
         if not isinstance(circ1, Circle):
@@ -2583,7 +2616,10 @@ class Mobius:
 def cross_ratio(A, B, C, D):
     """Cross ratio of four points. 
     
-    :param A,B,C,D: four distinct points
+    :param A: a point
+    :param B: another point
+    :param C: another point
+    :param D: another point
     :returns: A complex number. It is real if and only if the four points lie on a generalized circle (that is a circle or a line).
     
     """
