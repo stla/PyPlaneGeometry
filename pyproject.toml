@@ -1,5 +1,8 @@
 [tool.poetry]
-name = "planegeometry"
+name = "PyPlaneGeometry"
+packages = [
+    { include = "planegeometry" },
+]
 version = "0.1.0"
 description = "Plane geometry"
 homepage = "https://github.com/stla/PyPlaneGeometry"

@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath("../"))
 
 # -- Project information -----------------------------------------------------
 
-project = 'planegeometry'
+project = 'PyPlaneGeometry'
 copyright = '2023, Stéphane Laurent'
 author = 'Stéphane Laurent'
 
