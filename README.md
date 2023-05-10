@@ -10,7 +10,7 @@ package [PlaneGeometry](https://github.com/stla/PlaneGeometry) but it contains
 less features so far. Do not hesitate to encourage me if you are interested.
 
 ```
-pip install planegeometry
+pip install pyplanegeometry
 ```
 
 
