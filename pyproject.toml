@@ -2,9 +2,12 @@
 name = "planegeometry"
 version = "0.1.0"
 description = "Plane geometry"
+homepage = "https://github.com/stla/PyPlaneGeometry"
 authors = ["Stéphane Laurent <laurent_step@outlook.fr>"]
+documentation = "https://pyplanegeometry.readthedocs.io/en/latest/"
+keywords = ["plane geometry", "geometry"]
 license = "GPL-3.0-only"
-readme = "README.rst"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"
